@@ -77,13 +77,6 @@
                    END-IF
                    ADD 1 TO I
                END-PERFORM
-               MOVE 1 TO K
-               PERFORM UNTIL K > 9
-                   DISPLAY ARR(K) WITH NO ADVANCING 
-                   DISPLAY ", " WITH NO ADVANCING
-                   ADD 1 TO K
-               END-PERFORM
-               DISPLAY "  "
                ADD 1 TO J
            END-PERFORM.
            MOVE 1 TO I.
