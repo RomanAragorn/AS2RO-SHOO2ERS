@@ -123,6 +123,9 @@ class Game:
                     laser = Laser(enemy.rect.center, -4, screen_height)
                     self.laser_audio.play()  # Play laser sound
                     self.enemy_lasers.add(laser)
+    
+    def invert_color(self):
+        screen.fill((255, 0, 255))
 
     def collision_check(self):
         # Player lasers
@@ -147,6 +150,7 @@ class Game:
                         self.game_over = True  # Set game over state
                         self.handle_high_scores()
                     self.explosion_audio.play()  # Play explosion sound
+                    self.invert_color()
                     laser.kill()
 
         # Enemy collisions
@@ -158,6 +162,7 @@ class Game:
                         self.game_over = True # Set game over state
                         self.handle_high_scores()  
                     self.explosion_audio.play()  # Play explosion sound
+                    self.invert_color()
                     enemy.kill()
 
     def display_score(self):

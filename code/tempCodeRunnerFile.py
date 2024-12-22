@@ -1,31 +1,60 @@
-    def display_game_over(self):
-        
-        pygame.mixer.music.stop()
-        self.laser_audio.stop()
-        self.explosion_audio.stop()
-        
-        screen.fill((0, 0, 0))
+import pygame, sys
+from player import Player
+from laser import Laser
 
-        # Display the game over message
-        game_over_text = self.font.render("GAME OVER", True, (255, 0, 0))
-        score_text = self.font.render(f"Your Score: {self.score}", True, (255, 255, 255))
-        restart_text = self.font.render("Restart", True, (255, 255, 255))
-        quit_text = self.font.render("Quit", True, (255, 255, 255))
+pygame.init()
+screen_width = 400
+screen_height = 800
 
-        # Center the text
-        game_over_rect = game_over_text.get_rect(center=(screen_width / 2, screen_height / 4))
-        score_rect = score_text.get_rect(center=(screen_width / 2, screen_height / 2))
-        restart_rect = restart_text.get_rect(center=(screen_width / 2, screen_height / 1.5))
-        quit_rect = quit_text.get_rect(center=(screen_width / 2, screen_height / 1.3))
+screen = pygame.display.set_mode((screen_width, screen_height))
+# Spawn player
+player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
+player = pygame.sprite.GroupSingle(player_sprite)
 
-        screen.blit(game_over_text, game_over_rect)
-        screen.blit(score_text, score_rect)
+# Shoots lasers in the middle
+laser = Laser((screen_width / 2, 0), -4, screen_height) 
+lasers = pygame.sprite.Group()
+ENEMYLASER = pygame.USEREVENT + 1
+pygame.time.set_timer(ENEMYLASER, 2000)
 
-        # Highlight selected option
-        if self.selection == 0:
-            restart_text = self.font.render("Restart", True, (255, 0, 0))  # Red color for selection
-        else:
-            quit_text = self.font.render("Quit", True, (255, 0, 0))  # Red color for selection
+clock = pygame.time.Clock()
 
-        screen.blit(restart_text, restart_rect)
-        screen.blit(quit_text, quit_rect)
+def invert_color():
+    screen.fill((255, 0, 255))
+    # inv = pygame.Surface((screen_height, screen_height))
+    # inv.fill((255, 0, 255))
+    # inv.blit(screen, (0,0), None, pygame.BLEND_RGBA_SUB)
+    # screen.blit(inv, (0,0))
+
+def collision_check():
+    if lasers:
+            for laser in lasers:
+                if pygame.sprite.spritecollide(laser, player, False):
+                    laser.kill()
+                    invert_color()           
+
+def run():
+    player.draw(screen)
+    lasers.add(laser)
+    lasers.draw(screen)
+    player.update()
+    lasers.update()
+    collision_check()
+
+
+
+
+while True: 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+        if event.type == ENEMYLASER:
+            laser = Laser((screen_width / 2, 0), -4, screen_height)
+            
+    screen.fill((30, 30, 30))
+    run()
+
+    pygame.display.flip()
+    clock.tick(60)
