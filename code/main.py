@@ -83,6 +83,7 @@ class Game:
         # Score setup
         self.score = 0
         self.font = pygame.font.Font('font\\Pixeled.ttf', 20)
+        self.maj_font = pygame.font.Font('font\\Pixeled.ttf', 30)
 
         # Audio setup
         self.music = pygame.mixer.Sound('audio\\music.wav')
@@ -96,8 +97,17 @@ class Game:
         self.explosion_audio.set_volume(0)
 
         # Game state
+        self.running = True
         self.game_over = False
         self.selection = 0  # 0 for Restart, 1 for Quit
+        
+        # Game clock
+        self.tick = 60
+
+        # Extra windows
+        self.pause_menu = pygame.Surface((screen_width, screen_height))
+        self.pause_menu.fill((0, 0, 0))
+        self.pause_menu.set_alpha(90)
 
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
@@ -256,24 +266,47 @@ class Game:
         self.laser_audio.set_volume(0.1)  # Ensure laser audio is enabled again
         self.explosion_audio.set_volume(0.5)  # Ensure explosion audio is enabled again
 
+    def pause_game(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE] and self.running == True:
+            self.running = False
+        if keys[pygame.K_RETURN] and self.running == False:
+            self.running = True
+           
+    def display_pause_menu(self):
+        screen.blit(self.pause_menu, (0, 0))
+        pause_surf = self.maj_font.render("Paused", False, 'white')
+        pause_rect = pause_surf.get_rect(center=(screen_width / 2, 200))
+
+        return_surf = self.font.render("Enter = Unpause", False, 'white')
+        return_rect = return_surf.get_rect(center=(screen_width / 2, 400))
+        screen.blit(pause_surf, pause_rect)
+        screen.blit(return_surf, return_rect)
     def run(self):
+        # Check if game is getting paused
+        self.pause_game()
+        
         if self.game_over:
             self.display_game_over()
             self.handle_game_over_input()  # Handle user input on the game over screen
             return  # Stop the game logic
 
-        # Spawn enemies
-        self.spawn_enemy()
-        self.spawn_enemy_reset()
+        # Update 
+        # Is inside of an if-else because the game runs normally otherwise
+        if self.running:
+            # Spawn enemies
+            self.spawn_enemy()
+            self.spawn_enemy_reset()
 
-        # Collision checking
-        self.collision_check()
-
-        # Update
-        self.player.update()
-        self.enemies.update()
-        self.enemy_lasers.update()
-
+            # Collision checking
+            self.collision_check()
+            self.player.update()
+            self.enemies.update()
+            self.enemy_lasers.update()
+        else: 
+            # Display pause menu 
+            self.display_pause_menu()
+            
         # Draw
         self.player.draw(screen)
         self.player.sprite.lasers.draw(screen)
@@ -316,7 +349,7 @@ if __name__ == '__main__':
   pygame.time.set_timer(ENEMYLASER, 2000)
 
   # Main loop
-  while True: 
+  while True:
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         pygame.quit()
@@ -324,10 +357,10 @@ if __name__ == '__main__':
       
       if event.type == ENEMYLASER:
         game.enemy_shoot()
-         
+
     screen.fill((30,30,30))
     game.run()
     crt.draw()
     
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(game.tick)
