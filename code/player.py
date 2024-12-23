@@ -10,6 +10,7 @@ class Player(pygame.sprite.Sprite):
     self.speed = speed
     self.ready = True
     self.laser_time = 0
+    self.point_flag = 0
     self.laser_cooldown = 600
     self.health = 3
     self.laser_sound = pygame.mixer.Sound('audio\laser.wav')

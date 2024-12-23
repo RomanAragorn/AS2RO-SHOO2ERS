@@ -137,6 +137,27 @@ class Game:
     def invert_color(self):
         screen.fill((255, 0, 255))
 
+    def increment_point_flag(self):
+        if self.player.sprite.point_flag <= 4:
+            if self.score >= 100 and self.score < 500: 
+                self.player.sprite.point_flag = 1
+                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
+                print(self.player.sprite.laser_cooldown)
+            elif self.score >= 500 and self.score < 1000:
+                self.player.sprite.point_flag = 2
+                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
+                print(self.player.sprite.laser_cooldown)
+            elif self.score >= 1000 and self.score < 1500:
+                self.player.sprite.point_flag = 3
+                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
+                print(self.player.sprite.laser_cooldown)
+            elif self.score >= 1500 and self.score < 2000:
+                self.player.sprite.point_flag = 4
+                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
+                print(self.player.sprite.laser_cooldown)
+            elif self.score >= 2000:
+                self.player.sprite.point_flag = 5
+                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
     def collision_check(self):
         # Player lasers
         if self.player.sprite.lasers:
@@ -303,6 +324,7 @@ class Game:
             self.player.update()
             self.enemies.update()
             self.enemy_lasers.update()
+            self.increment_point_flag()
         else: 
             # Display pause menu 
             self.display_pause_menu()
