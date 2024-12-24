@@ -8,7 +8,7 @@ class Enemy(pygame.sprite.Sprite):
     self.color = color
     self.y_constraint = y_constraint
     self.spawn_time = spawn_time
-    self.health_scaling = round(self.spawn_time / 10000)
+    self.health_scaling = round(self.spawn_time / 500)
     
     if self.color == 'pink':
       self.speed = 2

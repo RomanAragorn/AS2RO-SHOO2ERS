@@ -78,7 +78,8 @@ class Game:
         self.enemy_lasers = pygame.sprite.Group()
         self.spawn_enemy_ready = True
         self.spawn_enemy_time = 0
-        self.spawn_enemy_timer = 1500
+        self.spawn_enemy_timer = 150
+        self.current_time = 0
 
         # Score setup
         self.score = 0
@@ -105,11 +106,16 @@ class Game:
         
         # Game clock
         self.tick = 60
+        self.runtime = 0
 
         # Extra windows
         self.pause_menu = pygame.Surface((screen_width, screen_height))
         self.pause_menu.fill((0, 0, 0))
         self.pause_menu.set_alpha(90)
+
+        # For game over screen
+        self.selection_timer = 100
+        self.selection_time = 0
 
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
@@ -118,14 +124,14 @@ class Game:
                 x = randint(50, screen_width - 100)
             else:
                 x = randint(50, screen_width - 50)
-            self.spawn_enemy_time = pygame.time.get_ticks()
+            self.spawn_enemy_time = self.runtime
             self.enemies.add(Enemy(enemy_color, x, screen_height, self.spawn_enemy_time))
             self.spawn_enemy_ready = False
 
     def spawn_enemy_reset(self):
         if not self.spawn_enemy_ready:
-            current_time = pygame.time.get_ticks()
-            if current_time - self.spawn_enemy_time >= self.spawn_enemy_timer:
+            self.current_time = self.runtime
+            if self.current_time - self.spawn_enemy_time >= self.spawn_enemy_timer:
                 self.spawn_enemy_ready = True
 
     def enemy_shoot(self):
@@ -156,6 +162,7 @@ class Game:
             elif self.score >= 2000:
                 self.player.sprite.point_flag = 5
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
+    
     def collision_check(self):
         # Player lasers
         if self.player.sprite.lasers:
@@ -218,7 +225,6 @@ class Game:
             screen.blit(combo_surf, combo_rect)
 
     def display_game_over(self):
-        
         pygame.mixer.music.stop()
         self.laser_audio.stop()
         self.explosion_audio.stop()
@@ -229,28 +235,33 @@ class Game:
         game_over_text = self.font.render("GAME OVER", True, (255, 0, 0))
         score_text = self.font.render(f"Your Score: {self.score}", True, (255, 255, 255))
         restart_text = self.font.render("Restart", True, (255, 255, 255))
+        menu_text = self.font.render("Menu", False, (255, 255, 255))
         quit_text = self.font.render("Quit", True, (255, 255, 255))
 
         # Center the text
         game_over_rect = game_over_text.get_rect(center=(screen_width / 2, screen_height / 4))
         score_rect = score_text.get_rect(center=(screen_width / 2, screen_height / 2))
         restart_rect = restart_text.get_rect(center=(screen_width / 2, screen_height / 1.5))
+        menu_rect = menu_text.get_rect(center=(screen_width / 2, screen_height / 1.4))
         quit_rect = quit_text.get_rect(center=(screen_width / 2, screen_height / 1.3))
+        
 
         screen.blit(game_over_text, game_over_rect)
         screen.blit(score_text, score_rect)
         screen.blit(restart_text, restart_rect)
+        screen.blit(menu_text, menu_rect)
         screen.blit(quit_text, quit_rect)
-       
 
         # Highlight selected option
         if self.selection == 0:
             restart_text = self.font.render("Restart", True, (255, 0, 0))  # Red color for selection
-        
-        else:
+        elif self.selection == 1:
+            menu_text = self.font.render("Menu", True, (255, 0, 0))  # Red color for selection
+        elif self.selection == 2:
             quit_text = self.font.render("Quit", True, (255, 0, 0))  # Red color for selection
 
         screen.blit(restart_text, restart_rect)
+        screen.blit(menu_text, menu_rect)
         screen.blit(quit_text, quit_rect)
 
     def handle_high_scores(self):
@@ -267,24 +278,28 @@ class Game:
     
     def handle_game_over_input(self):
         keys = pygame.key.get_pressed()
-
         if keys[pygame.K_UP]:  # Move up
+            self.selection_time = pygame.time.get_ticks()
             if self.selection > 0:
                 self.selection -= 1
         elif keys[pygame.K_DOWN]:  # Move down
-            if self.selection < 1:
+            if self.selection < 2:
+                self.selection_time = pygame.time.get_ticks()
                 self.selection += 1
-
+ 
         if keys[pygame.K_RETURN]:  # Enter key to select
             if self.selection == 0:
                 self.reset_game()
                 pygame.mixer.music.stop()
             elif self.selection == 1:
+                pass
+            elif self.selection == 2:
                 pygame.quit()
                 sys.exit()
-
+            
     def reset_game(self):
         # Reset all variables to their initial states 
+        self.running = True
         player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
         self.enemies.empty()
@@ -292,6 +307,9 @@ class Game:
         self.score = 0
         self.game_over = False
         self.selection = 0  # Reset selection to "Restart"
+        self.runtime = 0
+        self.current_time = 0
+        self.spawn_enemy_time = 0
 
         # Restart the background music and SFX when the game restarts
         
@@ -314,13 +332,15 @@ class Game:
         return_rect = return_surf.get_rect(center=(screen_width / 2, 400))
         screen.blit(pause_surf, pause_rect)
         screen.blit(return_surf, return_rect)
+
     def run(self):
         # Check if game is getting paused
         self.pause_game()
         
         if self.game_over:
             self.display_game_over()
-            self.handle_game_over_input()  # Handle user input on the game over screen
+            if pygame.time.get_ticks() - self.selection_time >= self.selection_timer:
+                self.handle_game_over_input()  # Handle user input on the game over screen
             return  # Stop the game logic
 
         # Update 
@@ -348,7 +368,7 @@ class Game:
         self.display_score()
         self.display_lives()
         self.display_combo()
-
+        self.runtime += 1
 # For extra graphics
 class CRT:
   def __init__(self):
@@ -385,12 +405,12 @@ if __name__ == '__main__':
   # Main loop
   while True:
     for event in pygame.event.get():
-      if event.type == pygame.QUIT:
-        pygame.quit()
-        sys.exit()
-      
-      if event.type == ENEMYLASER:
-        game.enemy_shoot()
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        
+        if event.type == ENEMYLASER:
+            game.enemy_shoot()      
 
     screen.fill((30,30,30))
     game.run()
