@@ -136,7 +136,7 @@ class Game:
                     self.laser_audio.play()  # Play laser sound
                     self.enemy_lasers.add(laser)
     
-    def invert_color(self):
+    def damaged(self):
         screen.fill((255, 0, 255))
 
     def increment_point_flag(self):
@@ -184,7 +184,7 @@ class Game:
                         self.game_over = True  # Set game over state
                         self.handle_high_scores()
                     self.explosion_audio.play()  # Play explosion sound
-                    self.invert_color()
+                    self.damaged()
                     laser.kill()
 
         # Enemy collisions
@@ -198,7 +198,7 @@ class Game:
                         self.game_over = True # Set game over state
                         self.handle_high_scores()  
                     self.explosion_audio.play()  # Play explosion sound
-                    self.invert_color()
+                    self.damaged()
                     enemy.kill()
 
     def display_score(self):
@@ -214,7 +214,7 @@ class Game:
     def display_combo(self):
         if self.combo > 0: 
             combo_surf = self.font.render(f'Combo: {self.combo}', False, 'white')
-            combo_rect = combo_surf.get_rect(topright=(10, 50))
+            combo_rect = combo_surf.get_rect(topleft=(10, 50))
             screen.blit(combo_surf, combo_rect)
 
     def display_game_over(self):
@@ -336,7 +336,6 @@ class Game:
             self.enemies.update()
             self.enemy_lasers.update()
             self.increment_point_flag()
-            print(pygame.time.get_ticks())
         else: 
             # Display pause menu 
             self.display_pause_menu()
