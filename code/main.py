@@ -84,6 +84,8 @@ class Game:
         self.score = 0
         self.font = pygame.font.Font('font\\Pixeled.ttf', 20)
         self.maj_font = pygame.font.Font('font\\Pixeled.ttf', 30)
+        self.combo = 0
+        self.combo_bonus = 0
 
         # Audio setup
         self.music = pygame.mixer.Sound('audio\\music.wav')
@@ -164,7 +166,10 @@ class Game:
                         enemy.health -= 1       
                         if enemy.health <= 0:
                             enemy.kill()
-                            self.score += enemy.value
+                            if self.combo <= 29:
+                                self.combo += 1
+                                self.combo_bonus = self.combo * 10
+                            self.score += (enemy.value + self.combo_bonus)
                     self.explosion_audio.play()  # Play explosion sound
                     laser.kill()
 
@@ -173,6 +178,8 @@ class Game:
             for laser in self.enemy_lasers:
                 if pygame.sprite.spritecollide(laser, self.player, False):
                     self.player.sprite.health -= 1
+                    self.combo = 0
+                    self.combo_bonus = self.combo * 10
                     if self.player.sprite.health <= 0:
                         self.game_over = True  # Set game over state
                         self.handle_high_scores()
@@ -185,6 +192,8 @@ class Game:
             for enemy in self.enemies:
                 if pygame.sprite.spritecollide(enemy, self.player, False):
                     self.player.sprite.health -= 1
+                    self.combo = 0
+                    self.combo_bonus = self.combo * 10
                     if self.player.sprite.health <= 0:
                         self.game_over = True # Set game over state
                         self.handle_high_scores()  
@@ -201,6 +210,12 @@ class Game:
         lives_surf = self.font.render(f'Lives: {self.player.sprite.health}', False, 'white')
         lives_rect = lives_surf.get_rect(topright=(screen_width - 10, 10))
         screen.blit(lives_surf, lives_rect)
+    
+    def display_combo(self):
+        if self.combo > 0: 
+            combo_surf = self.font.render(f'Combo: {self.combo}', False, 'white')
+            combo_rect = combo_surf.get_rect(topright=(10, 50))
+            screen.blit(combo_surf, combo_rect)
 
     def display_game_over(self):
         
@@ -333,6 +348,7 @@ class Game:
         self.enemy_lasers.draw(screen)
         self.display_score()
         self.display_lives()
+        self.display_combo()
 
 # For extra graphics
 class CRT:
