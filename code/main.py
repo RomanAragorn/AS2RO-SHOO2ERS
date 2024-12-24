@@ -116,8 +116,8 @@ class Game:
                 x = randint(50, screen_width - 100)
             else:
                 x = randint(50, screen_width - 50)
-            self.enemies.add(Enemy(enemy_color, x, screen_height))
             self.spawn_enemy_time = pygame.time.get_ticks()
+            self.enemies.add(Enemy(enemy_color, x, screen_height, self.spawn_enemy_time))
             self.spawn_enemy_ready = False
 
     def spawn_enemy_reset(self):
@@ -142,19 +142,15 @@ class Game:
             if self.score >= 100 and self.score < 500: 
                 self.player.sprite.point_flag = 1
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
-                print(self.player.sprite.laser_cooldown)
             elif self.score >= 500 and self.score < 1000:
                 self.player.sprite.point_flag = 2
-                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
-                print(self.player.sprite.laser_cooldown)
+                self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)     
             elif self.score >= 1000 and self.score < 1500:
                 self.player.sprite.point_flag = 3
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
-                print(self.player.sprite.laser_cooldown)
             elif self.score >= 1500 and self.score < 2000:
                 self.player.sprite.point_flag = 4
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
-                print(self.player.sprite.laser_cooldown)
             elif self.score >= 2000:
                 self.player.sprite.point_flag = 5
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
@@ -293,7 +289,7 @@ class Game:
             self.running = False
         if keys[pygame.K_RETURN] and self.running == False:
             self.running = True
-           
+
     def display_pause_menu(self):
         screen.blit(self.pause_menu, (0, 0))
         pause_surf = self.maj_font.render("Paused", False, 'white')
@@ -325,6 +321,7 @@ class Game:
             self.enemies.update()
             self.enemy_lasers.update()
             self.increment_point_flag()
+            print(pygame.time.get_ticks())
         else: 
             # Display pause menu 
             self.display_pause_menu()
