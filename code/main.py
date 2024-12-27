@@ -5,6 +5,7 @@ from random import randint, choice
 from laser import Laser
 from menu import Menu
 from score import show_highscore_window, handle_fresh_file
+from drops import Drop
 
 #================Main Menu===============#
 # Start Game
@@ -117,15 +118,22 @@ class Game:
         self.selection_timer = 100
         self.selection_time = 0
 
+        # Drops
+        self.drop_rate = 0.3
+        self.drops = pygame.sprite.Group()
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
+            has_drop = False
             enemy_color = choice(['pink', 'green', 'blue'])
+            will_drop = randint(0, 1)
+            if will_drop <= self.drop_rate:
+                has_drop = True
             if enemy_color == 'green':
                 x = randint(50, screen_width - 100)
             else:
                 x = randint(50, screen_width - 50)
             self.spawn_enemy_time = self.runtime
-            self.enemies.add(Enemy(enemy_color, x, screen_height, self.spawn_enemy_time))
+            self.enemies.add(Enemy(enemy_color, x, screen_height, self.spawn_enemy_time, has_drop))
             self.spawn_enemy_ready = False
 
     def spawn_enemy_reset(self):
@@ -162,7 +170,7 @@ class Game:
             elif self.score >= 2000:
                 self.player.sprite.point_flag = 5
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
-    
+
     def collision_check(self):
         # Player lasers
         if self.player.sprite.lasers:
@@ -170,8 +178,13 @@ class Game:
                 enemy_hit = pygame.sprite.spritecollide(laser, self.enemies, False)
                 if enemy_hit:
                     for enemy in enemy_hit:
-                        enemy.health -= 1       
+                        enemy.health -= 1
                         if enemy.health <= 0:
+                            print(enemy.has_drop)
+                            if enemy.has_drop:
+                                drop_type = choice(['health', 'shield'])
+                                print(drop_type)
+                                self.drops.add(Drop(drop_type, screen_height, enemy.rect.center))
                             enemy.kill()
                             if self.combo <= 29:
                                 self.combo += 1
@@ -356,6 +369,7 @@ class Game:
             self.enemies.update()
             self.enemy_lasers.update()
             self.increment_point_flag()
+            self.drops.update()
         else: 
             # Display pause menu 
             self.display_pause_menu()
@@ -365,6 +379,7 @@ class Game:
         self.player.sprite.lasers.draw(screen)
         self.enemies.draw(screen)
         self.enemy_lasers.draw(screen)
+        self.drops.draw(screen)
         self.display_score()
         self.display_lives()
         self.display_combo()

@@ -1,7 +1,7 @@
 import pygame
 
 class Enemy(pygame.sprite.Sprite):
-  def __init__(self, color, x, y_constraint, spawn_time):
+  def __init__(self, color, x, y_constraint, spawn_time, has_drop):
     super().__init__()
     self.image = pygame.image.load(f'images\\{color}.png').convert_alpha()
     self.rect = self.image.get_rect(topleft = (x,-50))
@@ -9,6 +9,7 @@ class Enemy(pygame.sprite.Sprite):
     self.y_constraint = y_constraint
     self.spawn_time = spawn_time
     self.health_scaling = round(self.spawn_time / 500)
+    self.has_drop = has_drop
     
     if self.color == 'pink':
       self.speed = 2
