@@ -180,10 +180,8 @@ class Game:
                     for enemy in enemy_hit:
                         enemy.health -= 1
                         if enemy.health <= 0:
-                            print(enemy.has_drop)
                             if enemy.has_drop:
                                 drop_type = choice(['health', 'shield'])
-                                print(drop_type)
                                 self.drops.add(Drop(drop_type, screen_height, enemy.rect.center))
                             enemy.kill()
                             if self.combo <= 29:
@@ -220,7 +218,17 @@ class Game:
                     self.explosion_audio.play()  # Play explosion sound
                     self.damaged()
                     enemy.kill()
-
+        # Drop collisions
+        if self.drops: 
+            for drop in self.drops: 
+                if pygame.sprite.spritecollide(drop, self.player, False):
+                    if drop.type == 'health':
+                        if self.player.sprite.health < self.player.sprite.max_health:
+                            self.player.sprite.health += 1
+                    elif drop.type == 'shield':
+                        if self.player.sprite.shield_amount < self.player.sprite.shield_amount_max:
+                            self.player.sprite.shield_amount += 1
+                    drop.kill()
     def display_score(self):
         score_surf = self.font.render(f'Score: {self.score}', False, 'white')
         score_rect = score_surf.get_rect(topleft=(10, 10))
@@ -236,6 +244,11 @@ class Game:
             combo_surf = self.font.render(f'Combo: {self.combo}', False, 'white')
             combo_rect = combo_surf.get_rect(topleft=(10, 50))
             screen.blit(combo_surf, combo_rect)
+    
+    def display_shield(self):
+        shield_surf = self.font.render(f'Shield: {self.player.sprite.shield_amount}', False, 'white')
+        shield_rect = shield_surf.get_rect(topright=(screen_width - 10, 50))
+        screen.blit(shield_surf, shield_rect)
 
     def display_game_over(self):
         pygame.mixer.music.stop()
@@ -383,6 +396,7 @@ class Game:
         self.display_score()
         self.display_lives()
         self.display_combo()
+        self.display_shield()
         self.runtime += 1
 # For extra graphics
 class CRT:
