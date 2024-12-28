@@ -5,7 +5,9 @@ from random import randint, choice
 from laser import Laser
 from menu import Menu
 from score import show_highscore_window, handle_fresh_file
+from timer import Timer
 from drops import Drop
+
 
 #================Main Menu===============#
 # Start Game
@@ -70,9 +72,14 @@ if __name__ == "__main__":
 # Game elements
 class Game:
     def __init__(self):
+        # Timers
+        simple_timer = Timer()
+
         # Player setup
         player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
+        self.player_surface = pygame.Surface((50,50))
+        self.player_mask = pygame.mask.from_surface(self.player_surface)
 
         # Enemy setup
         self.enemies = pygame.sprite.Group()
@@ -121,6 +128,15 @@ class Game:
         # Drops
         self.drop_rate = 0.3
         self.drops = pygame.sprite.Group()
+
+        # Shield functionality
+        self.shield_max_amount = 3
+        self.shield_amount = 1
+        self.shield_time = 0
+        self.shield_cooldown = 100 
+        self.shield_duration = 2000
+        self.is_shielded = False
+
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
             has_drop = False
@@ -170,6 +186,18 @@ class Game:
             elif self.score >= 2000:
                 self.player.sprite.point_flag = 5
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
+
+    def shield(self):
+        keys = pygame.key.get_pressed()
+        if self.shield_amount > 0 and keys[pygame.K_SPACE]:
+            self.is_shielded = True
+            self.shield_time = pygame.time.get_ticks()
+            if self.is_shielded:
+                current_time = pygame.time.get_ticks()
+                if current_time - self.shield_time >= self.shield_duration:
+                    print('Shield')
+                
+            self.shield_amount -= 1
 
     def collision_check(self):
         # Player lasers
@@ -226,8 +254,8 @@ class Game:
                         if self.player.sprite.health < self.player.sprite.max_health:
                             self.player.sprite.health += 1
                     elif drop.type == 'shield':
-                        if self.player.sprite.shield_amount < self.player.sprite.shield_amount_max:
-                            self.player.sprite.shield_amount += 1
+                        if self.shield_amount < self.shield_max_amount:
+                            self.shield_amount += 1
                     drop.kill()
     def display_score(self):
         score_surf = self.font.render(f'Score: {self.score}', False, 'white')
@@ -246,7 +274,7 @@ class Game:
             screen.blit(combo_surf, combo_rect)
     
     def display_shield(self):
-        shield_surf = self.font.render(f'Shield: {self.player.sprite.shield_amount}', False, 'white')
+        shield_surf = self.font.render(f'Shield: {self.shield_amount}', False, 'white')
         shield_rect = shield_surf.get_rect(topright=(screen_width - 10, 50))
         screen.blit(shield_surf, shield_rect)
 
@@ -383,6 +411,7 @@ class Game:
             self.enemy_lasers.update()
             self.increment_point_flag()
             self.drops.update()
+            self.shield()
         else: 
             # Display pause menu 
             self.display_pause_menu()
