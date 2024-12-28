@@ -5,7 +5,7 @@ from random import randint, choice
 from laser import Laser
 from menu import Menu
 from score import show_highscore_window, handle_fresh_file
-from timer import Timer
+from timer import Timer 
 from drops import Drop
 
 
@@ -72,9 +72,6 @@ if __name__ == "__main__":
 # Game elements
 class Game:
     def __init__(self):
-        # Timers
-        simple_timer = Timer()
-
         # Player setup
         player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
@@ -131,11 +128,16 @@ class Game:
 
         # Shield functionality
         self.shield_max_amount = 3
-        self.shield_amount = 1
+        self.shield_amount = 3
         self.shield_time = 0
         self.shield_cooldown = 100 
         self.shield_duration = 2000
         self.is_shielded = False
+
+        # Timers
+        self.timers = {
+            'shield' : Timer(1500, func = self.toggle_shield)
+        }
 
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
@@ -187,17 +189,26 @@ class Game:
                 self.player.sprite.point_flag = 5
                 self.player.sprite.laser_cooldown = 600 - (self.player.sprite.point_flag * 100)
 
-    def shield(self):
-        keys = pygame.key.get_pressed()
-        if self.shield_amount > 0 and keys[pygame.K_SPACE]:
-            self.is_shielded = True
-            self.shield_time = pygame.time.get_ticks()
-            if self.is_shielded:
-                current_time = pygame.time.get_ticks()
-                if current_time - self.shield_time >= self.shield_duration:
-                    print('Shield')
-                
+    def toggle_shield(self):
+        self.is_shielded = not self.is_shielded
+
+    def shield_up(self):
+        if self.shield_amount > 0: 
+            self.toggle_shield()
+            self.timers['shield'].activate()
             self.shield_amount -= 1
+
+    def shielded(self):
+        if self.is_shielded:
+            self.player.sprite.image = pygame.image.load('images\\shield.png').convert_alpha()
+            self.player.sprite.image = pygame.transform.scale(self.player.sprite.image, (50, 50))
+        else:
+            self.player.sprite.image = pygame.image.load('images\\player.png').convert_alpha()
+            self.player.sprite.image = pygame.transform.scale(self.player.sprite.image, (50, 50))
+            
+    def update_timers(self):
+        for timer in self.timers.values(): 
+            timer.update()
 
     def collision_check(self):
         # Player lasers
@@ -223,28 +234,30 @@ class Game:
         if self.enemy_lasers:
             for laser in self.enemy_lasers:
                 if pygame.sprite.spritecollide(laser, self.player, False):
-                    self.player.sprite.health -= 1
-                    self.combo = 0
-                    self.combo_bonus = self.combo * 10
+                    if not self.is_shielded:
+                        self.player.sprite.health -= 1
+                        self.damaged()
+                        self.combo = 0
+                        self.combo_bonus = self.combo * 10
                     if self.player.sprite.health <= 0:
                         self.game_over = True  # Set game over state
                         self.handle_high_scores()
                     self.explosion_audio.play()  # Play explosion sound
-                    self.damaged()
                     laser.kill()
 
         # Enemy collisions
         if self.enemies:
             for enemy in self.enemies:
                 if pygame.sprite.spritecollide(enemy, self.player, False):
-                    self.player.sprite.health -= 1
-                    self.combo = 0
-                    self.combo_bonus = self.combo * 10
+                    if not self.is_shielded:
+                        self.player.sprite.health -= 1
+                        self.damaged()
+                        self.combo = 0
+                        self.combo_bonus = self.combo * 10
                     if self.player.sprite.health <= 0:
                         self.game_over = True # Set game over state
                         self.handle_high_scores()  
                     self.explosion_audio.play()  # Play explosion sound
-                    self.damaged()
                     enemy.kill()
         # Drop collisions
         if self.drops: 
@@ -411,7 +424,8 @@ class Game:
             self.enemy_lasers.update()
             self.increment_point_flag()
             self.drops.update()
-            self.shield()
+            self.update_timers()
+            self.shielded()
         else: 
             # Display pause menu 
             self.display_pause_menu()
@@ -468,7 +482,11 @@ if __name__ == '__main__':
             sys.exit()
         
         if event.type == ENEMYLASER:
-            game.enemy_shoot()      
+            game.enemy_shoot()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:      
+                game.shield_up()
 
     screen.fill((30,30,30))
     game.run()
