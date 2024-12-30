@@ -1,73 +1,54 @@
 import pygame, sys
 from player import Player
 from laser import Laser
+from timer import Timer
+from boss import Boss
+from boss_moves import Boss_move
+from random import randint, choice
 
 pygame.init()
+display_width = 1920
+display_height = 1080
 screen_width = 400
 screen_height = 800
 
-screen = pygame.display.set_mode((screen_width, screen_height))
-# Spawn player
-player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
-player = pygame.sprite.GroupSingle(player_sprite)
-
-# Shoots lasers in the middle
-laser = Laser((screen_width / 2, 0), -4, screen_height) 
-lasers = pygame.sprite.Group()
-score = 2000
-ENEMYLASER = pygame.USEREVENT + 1
-
-pygame.time.set_timer(ENEMYLASER, 2000)
-
-
+display = pygame.display.set_mode((display_width, display_height))
 clock = pygame.time.Clock()
 
-def invert_color():
-    screen.fill((255, 0, 255))
-    # inv = pygame.Surface((screen_height, screen_height))
-    # inv.fill((255, 0, 255))
-    # inv.blit(screen, (0,0), None, pygame.BLEND_RGBA_SUB)
-    # screen.blit(inv, (0,0))
+class Arcade:
+    def __init__(self):
+        self.arcade = pygame.image.load('images\\arcade.png').convert_alpha()
+        self.arcade = pygame.transform.scale(self.arcade, (1920, 1080))
 
-def collision_check():
-    if lasers:
-            for laser in lasers:
-                if pygame.sprite.spritecollide(laser, player, False):
-                    laser.kill()
-                    invert_color()           
+    def draw(self):
+        display.blit(self.arcade, (0,0))
 
-def increment_point_flag():
-    if player.sprite.point_flag <= 4:
-        if score >= 100 and score < 500: 
-            player.sprite.point_flag = 1
-            player.sprite.laser_cooldown = 600 - (player.sprite.point_flag * 10)
-        
-        if score >= 500 and score < 1000:
-            player.sprite.point_flag = 2
-            player.sprite.laser_cooldown = 600 - (player.sprite.point_flag * 10)
+class Screen: 
+    def __init__(self, screen_height, screen_width):
+        self.screen = pygame.Surface((screen_width, screen_height))
+        self.rect = self.screen.get_rect(center=(display_width/2, display_height - 438))
+        self.screen.fill("red")
+    def draw(self):
+        display.blit(self.screen, self.rect)
 
-        if score >= 1000 and score < 1500:
-            player.sprite.point_flag = 3
-            player.sprite.laser_cooldown = 600 - (player.sprite.point_flag * 10)
+boss = pygame.sprite.GroupSingle()
+boss_summon = False
 
-        if score >= 1500 and score < 2000:
-            player.sprite.point_flag = 4
-            player.sprite.laser_cooldown = 600 - (player.sprite.point_flag * 10)
-        
-        if score >= 2000:
-            player.sprite.point_flag = 5
-            player.sprite.laser_cooldown = 600 - (player.sprite.point_flag * 10)
+def summon_boss():
+    global boss_summon
+    boss_summon = True
+    spawn_time = pygame.time.get_ticks()
+    boss.add(Boss(100, spawn_time, has_drop=True))
 
-def run():
-    player.draw(screen)
-    player.sprite.lasers.draw(screen)
-    lasers.add(laser)
-    lasers.draw(screen)
-    player.update()
-    lasers.update()
-    collision_check()
-    increment_point_flag()
-    print(player.sprite.point_flag)
+def hello():
+    print(pygame.time.get_ticks())
+    print('hello')
+
+arcade = Arcade()
+screen = Screen(screen_height, screen_width)
+player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 4)
+player = pygame.sprite.GroupSingle(player_sprite)
+boss_timer = Timer(2000, autostart = True, func = summon_boss)
 
 
 while True: 
@@ -75,11 +56,20 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        if event.type == pygame.KEYDOWN: 
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
 
-        if event.type == ENEMYLASER:
-            laser = Laser((screen_width / 2, 0), -4, screen_height)
-            
-    screen.fill((30, 30, 30))
-    run()
+    display.fill((30, 30, 30))
+    
+    player.draw(display)
+    player.update()
+    boss_timer.update()
+    if boss:
+        boss.draw(display)
+        boss.update()
+        boss.sprite.move_sprites.draw(display)
+    arcade.draw()
     pygame.display.flip()
     clock.tick(60)

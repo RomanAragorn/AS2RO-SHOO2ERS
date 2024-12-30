@@ -7,6 +7,7 @@ from menu import Menu
 from score import show_highscore_window, handle_fresh_file
 from timer import Timer 
 from drops import Drop
+from boss import Boss
 
 
 #================Main Menu===============#
@@ -73,7 +74,7 @@ if __name__ == "__main__":
 class Game:
     def __init__(self):
         # Player setup
-        player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
+        player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
         self.player_surface = pygame.Surface((50,50))
         self.player_mask = pygame.mask.from_surface(self.player_surface)
@@ -85,10 +86,12 @@ class Game:
         self.spawn_enemy_time = 0
         self.spawn_enemy_timer = 150
         self.current_time = 0
+        self.boss = pygame.sprite.GroupSingle()
+        
 
         # Score setup
         self.score = 0
-        self.font = pygame.font.Font('font\\Pixeled.ttf', 20)
+        self.font = pygame.font.Font('font\\Pixeled.ttf', 15)
         self.maj_font = pygame.font.Font('font\\Pixeled.ttf', 30)
         self.combo = 0
         self.combo_bonus = 0
@@ -114,7 +117,7 @@ class Game:
         self.runtime = 0
 
         # Extra windows
-        self.pause_menu = pygame.Surface((screen_width, screen_height))
+        self.pause_menu = pygame.Surface((screen_width, display_height))
         self.pause_menu.fill((0, 0, 0))
         self.pause_menu.set_alpha(90)
 
@@ -136,8 +139,16 @@ class Game:
 
         # Timers
         self.timers = {
-            'shield' : Timer(1500, func = self.toggle_shield)
+            'shield' : Timer(1500, func = self.toggle_shield),
+            'spawn_boss': Timer(2000, autostart = True, func = self.spawn_boss)
         }
+
+        # Arcade 
+        self.arcade = Arcade()
+        self.CRT = CRT()
+
+        # Layers
+        self.layers = pygame.sprite.LayeredUpdates()
 
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
@@ -147,11 +158,11 @@ class Game:
             if will_drop <= self.drop_rate:
                 has_drop = True
             if enemy_color == 'green':
-                x = randint(50, screen_width - 100)
+                x = randint(760, 1160 - 100)
             else:
-                x = randint(50, screen_width - 50)
+                x = randint(760, 1160 - 50)
             self.spawn_enemy_time = self.runtime
-            self.enemies.add(Enemy(enemy_color, x, screen_height, self.spawn_enemy_time, has_drop))
+            self.enemies.add(Enemy(enemy_color, x, display_height, self.spawn_enemy_time, has_drop))
             self.spawn_enemy_ready = False
 
     def spawn_enemy_reset(self):
@@ -160,11 +171,15 @@ class Game:
             if self.current_time - self.spawn_enemy_time >= self.spawn_enemy_timer:
                 self.spawn_enemy_ready = True
 
+    def spawn_boss(self):
+        spawn_time = pygame.time.get_ticks()
+        self.boss.add(Boss(100, spawn_time, has_drop=True))
+
     def enemy_shoot(self):
         if self.enemies.sprites():
             for enemy in self.enemies.sprites():
                 if enemy.color == 'pink':
-                    laser = Laser(enemy.rect.center, -4, screen_height)
+                    laser = Laser(enemy.rect.center, -4, display_height)
                     self.laser_audio.play()  # Play laser sound
                     self.enemy_lasers.add(laser)
     
@@ -221,13 +236,23 @@ class Game:
                         if enemy.health <= 0:
                             if enemy.has_drop:
                                 drop_type = choice(['health', 'shield'])
-                                self.drops.add(Drop(drop_type, screen_height, enemy.rect.center))
+                                self.drops.add(Drop(drop_type, display_height, enemy.rect.center))
                             enemy.kill()
                             if self.combo <= 29:
                                 self.combo += 1
                                 self.combo_bonus = self.combo * 10
                             self.score += (enemy.value + self.combo_bonus)
                     self.explosion_audio.play()  # Play explosion sound
+                    laser.kill()
+                boss_hit = pygame.sprite.spritecollide(laser, self.boss, False)
+                if boss_hit: 
+                    self.boss.sprite.health -= 1
+                    if self.boss.sprite.health <= 0:
+                        if self.combo <= 29:
+                                self.combo += 1
+                                self.combo_bonus = self.combo * 10
+                        self.score += (self.boss.sprite.value + self.combo_bonus)
+                    self.explosion_audio.play()
                     laser.kill()
 
         # Enemy lasers
@@ -259,6 +284,24 @@ class Game:
                         self.handle_high_scores()  
                     self.explosion_audio.play()  # Play explosion sound
                     enemy.kill()
+
+        # Boss moves collisions
+        if self.boss:
+            if self.boss.sprite.move_sprites:
+                for fist in self.boss.sprite.move_sprites:
+                    if pygame.sprite.spritecollide(fist, self.player, False):
+                        if not self.is_shielded:
+                            self.player.sprite.health -= 1
+                            self.damaged()
+                            self.combo = 0
+                            self.combo_bonus = self.combo * 10
+                        if self.player.sprite.health <= 0:
+                            self.game_over = True  # Set game over state
+                            self.handle_high_scores()
+                        self.explosion_audio.play()  # Play explosion sound
+                        fist.kill()       
+
+
         # Drop collisions
         if self.drops: 
             for drop in self.drops: 
@@ -271,24 +314,24 @@ class Game:
                             self.shield_amount += 1
                     drop.kill()
     def display_score(self):
-        score_surf = self.font.render(f'Score: {self.score}', False, 'white')
-        score_rect = score_surf.get_rect(topleft=(10, 10))
+        score_surf = self.font.render(f'{self.score}', False, 'white')
+        score_rect = score_surf.get_rect(topleft=(arcade_screen_left + 10, arcade_screen_top))
         screen.blit(score_surf, score_rect)
 
     def display_lives(self):
         lives_surf = self.font.render(f'Lives: {self.player.sprite.health}', False, 'white')
-        lives_rect = lives_surf.get_rect(topright=(screen_width - 10, 10))
+        lives_rect = lives_surf.get_rect(bottomleft=(arcade_screen_left - 10, arcade_screen_bottom - 50))
         screen.blit(lives_surf, lives_rect)
     
     def display_combo(self):
         if self.combo > 0: 
             combo_surf = self.font.render(f'Combo: {self.combo}', False, 'white')
-            combo_rect = combo_surf.get_rect(topleft=(10, 50))
+            combo_rect = combo_surf.get_rect(topleft=(arcade_screen_left + 9, arcade_screen_top + 50))
             screen.blit(combo_surf, combo_rect)
     
     def display_shield(self):
         shield_surf = self.font.render(f'Shield: {self.shield_amount}', False, 'white')
-        shield_rect = shield_surf.get_rect(topright=(screen_width - 10, 50))
+        shield_rect = shield_surf.get_rect(bottomleft=(arcade_screen_left - 10, arcade_screen_bottom))
         screen.blit(shield_surf, shield_rect)
 
     def display_game_over(self):
@@ -306,11 +349,11 @@ class Game:
         quit_text = self.font.render("Quit", True, (255, 255, 255))
 
         # Center the text
-        game_over_rect = game_over_text.get_rect(center=(screen_width / 2, screen_height / 4))
-        score_rect = score_text.get_rect(center=(screen_width / 2, screen_height / 2))
-        restart_rect = restart_text.get_rect(center=(screen_width / 2, screen_height / 1.5))
-        menu_rect = menu_text.get_rect(center=(screen_width / 2, screen_height / 1.4))
-        quit_rect = quit_text.get_rect(center=(screen_width / 2, screen_height / 1.3))
+        game_over_rect = game_over_text.get_rect(center=(screen_width / 2, display_height / 4))
+        score_rect = score_text.get_rect(center=(screen_width / 2, display_height / 2))
+        restart_rect = restart_text.get_rect(center=(screen_width / 2, display_height / 1.5))
+        menu_rect = menu_text.get_rect(center=(screen_width / 2, display_height / 1.4))
+        quit_rect = quit_text.get_rect(center=(screen_width / 2, display_height / 1.3))
         
 
         screen.blit(game_over_text, game_over_rect)
@@ -367,7 +410,7 @@ class Game:
     def reset_game(self):
         # Reset all variables to their initial states 
         self.running = True
-        player_sprite = Player((screen_width / 2, screen_height), screen_width, 8)
+        player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
         self.enemies.empty()
         self.enemy_lasers.empty()
@@ -396,10 +439,12 @@ class Game:
         pause_rect = pause_surf.get_rect(center=(screen_width / 2, 200))
 
         return_surf = self.font.render("Enter = Unpause", False, 'white')
-        return_rect = return_surf.get_rect(center=(screen_width / 2, 400))
+        return_rect = return_surf.get_rect(center=(screen_width / 2, 350))
         screen.blit(pause_surf, pause_rect)
         screen.blit(return_surf, return_rect)
 
+    def add_to_layers(self):
+        pass
     def run(self):
         # Check if game is getting paused
         self.pause_game()
@@ -426,6 +471,7 @@ class Game:
             self.drops.update()
             self.update_timers()
             self.shielded()
+            self.boss.update()
         else: 
             # Display pause menu 
             self.display_pause_menu()
@@ -441,36 +487,58 @@ class Game:
         self.display_combo()
         self.display_shield()
         self.runtime += 1
+        if self.boss:
+            self.boss.draw(screen)
+            self.boss.sprite.move_sprites.draw(screen)
+        self.CRT.draw()
+        self.arcade.draw()
+            
+
 # For extra graphics
-class CRT:
+class CRT(pygame.sprite.Sprite):
   def __init__(self):
+    super().__init__()
     self.tv = pygame.image.load('images\\tv.png').convert_alpha()
-    self.tv = pygame.transform.scale(self.tv, (screen_width, screen_height))
+    self.tv = pygame.transform.scale(self.tv, (1920, 1080))
+    self.rect = self.tv.get_rect(center=(display_width / 2, display_height / 2))
 
   def create_lines(self):
     line_height = 3
-    line_amount = int(screen_height/line_height)
+    line_amount = int(display_height/line_height)
     for line in range(line_amount):
       y_pos = line * line_height
-      pygame.draw.line(self.tv,'black',(0, y_pos),(screen_width, y_pos), 1)
+      pygame.draw.line(self.tv,'black',(0, y_pos),(display_width, y_pos), 1)
 
   def draw(self):
     self.tv.set_alpha(randint(75,90))
     self.create_lines()
-    screen.blit(self.tv, (0,0))
+    screen.blit(self.tv, self.rect)
 
+class Arcade(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.arcade = pygame.image.load('images\\arcade.png').convert_alpha()
+        self.arcade = pygame.transform.scale(self.arcade, (1920, 1080))
+    
+    def draw(self):
+        screen.blit(self.arcade, (0,0))
 # Main game loop
 if __name__ == '__main__':
   pygame.init()
+  
+  
+  display_width = 1920
+  display_height = 1080
   screen_width = 400
   screen_height = 800
-
-  screen = pygame.display.set_mode((screen_width, screen_height))
+  arcade_screen_left = 660
+  arcade_screen_right = 1260
+  arcade_screen_top = display_height - 770
+  arcade_screen_bottom = display_height - 50
+  screen = pygame.display.set_mode((display_width, display_height))
   clock = pygame.time.Clock()
   
   game = Game()
-  crt = CRT()
-  
   ENEMYLASER = pygame.USEREVENT + 1
   pygame.time.set_timer(ENEMYLASER, 2000)
 
@@ -487,10 +555,11 @@ if __name__ == '__main__':
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:      
                 game.shield_up()
+            elif event.key == pygame.K_q:
+                pygame.quit()
+                sys.exit()
 
     screen.fill((30,30,30))
     game.run()
-    crt.draw()
-    
     pygame.display.flip()
     clock.tick(game.tick)

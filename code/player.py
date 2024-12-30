@@ -7,6 +7,7 @@ class Player(pygame.sprite.Sprite):
     self.image = pygame.image.load('images\player.png').convert_alpha() 
     self.rect = self.image.get_rect(midbottom = pos)
     self.x_constraint = x_constraint
+    self.left_constraint =  pos[0] - 200
     self.speed = speed
     self.ready = True
     self.laser_time = 0
@@ -27,8 +28,8 @@ class Player(pygame.sprite.Sprite):
       self.rect.x += self.speed
 
   def constraint(self):
-    if self.rect.left <= 0: 
-      self.rect.left = 0
+    if self.rect.left <= self.left_constraint: 
+      self.rect.left = self.left_constraint
     elif self.rect.right >= self.x_constraint: 
       self.rect.right = self.x_constraint
   
