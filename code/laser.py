@@ -6,6 +6,7 @@ class Laser(pygame.sprite.Sprite):
     self.image = pygame.Surface((4,10))
     self.image.fill('white')
     self.rect = self.image.get_rect(center = pos)
+    self.mask = pygame.mask.from_surface(self.image)
     self.speed = speed
     self.y_constraint = y_constraint
 

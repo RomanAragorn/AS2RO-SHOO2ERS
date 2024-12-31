@@ -6,6 +6,7 @@ class Drop(pygame.sprite.Sprite):
     self.image = pygame.image.load(f'images\\{drop_type}.png').convert_alpha()
     self.image = pygame.transform.scale(self.image, (40, 40))
     self.rect = self.image.get_rect(center = pos)
+    self.mask = pygame.mask.from_surface(self.image)
     self.speed = 1
     self.type = drop_type
     self.y_constraint = y_constraint

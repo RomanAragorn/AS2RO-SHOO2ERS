@@ -6,6 +6,7 @@ class Player(pygame.sprite.Sprite):
     super().__init__()
     self.image = pygame.image.load('images\player.png').convert_alpha() 
     self.rect = self.image.get_rect(midbottom = pos)
+    self.mask = pygame.mask.from_surface(self.image)
     self.x_constraint = x_constraint
     self.left_constraint =  pos[0] - 200
     self.speed = speed

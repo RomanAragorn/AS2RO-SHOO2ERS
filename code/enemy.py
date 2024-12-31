@@ -5,6 +5,7 @@ class Enemy(pygame.sprite.Sprite):
     super().__init__()
     self.image = pygame.image.load(f'images\\{color}.png').convert_alpha()
     self.rect = self.image.get_rect(topleft = (x, 300))
+    self.mask = pygame.mask.from_surface(self.image)
     self.color = color
     self.y_constraint = y_constraint
     self.spawn_time = spawn_time
@@ -19,6 +20,7 @@ class Enemy(pygame.sprite.Sprite):
     elif self.color == 'green':
       self.image = pygame.transform.scale(self.image, (100,100))
       self.rect = self.image.get_rect(topleft = (x,-100))
+      self.mask = pygame.mask.from_surface(self.image)
       self.speed = 1
       self.value = 500
       self.health = 5 + self.health_scaling

@@ -8,6 +8,7 @@ class Boss_move(pygame.sprite.Sprite):
       self.image = pygame.image.load('images\\fist.png').convert_alpha()
       self.image = pygame.transform.scale(self.image, (100, 100))
       self.rect = self.image.get_rect(center=(pos))
+      self.mask = pygame.mask.from_surface(self.image)
       self.speed = 4
       self.y_constraint = y_constraint
 

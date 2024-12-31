@@ -9,12 +9,13 @@ class Boss(pygame.sprite.Sprite):
     self.image = pygame.image.load('images\\boss.png').convert_alpha()
     self.image = pygame.transform.scale(self.image, (200, 200))
     self.rect = self.image.get_rect(center = (960, 300))
+    self.mask = pygame.mask.from_surface(self.image)
     self.y_constraint = y_constraint
     self.spawn_time = spawn_time
     self.health_scaling = round(self.spawn_time / 500)
     self.has_drop = has_drop
     self.layer = layer
-    self.health = 1000
+    self.health = 100
     self.value = 5000
     self.left_constraint = arcade_screen_left
     self.right_constraint = arcade_screen_right

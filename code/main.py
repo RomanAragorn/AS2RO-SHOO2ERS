@@ -231,65 +231,39 @@ class Game:
             for laser in self.player.sprite.lasers:
                 enemy_hit = pygame.sprite.spritecollide(laser, self.enemies, False)
                 if enemy_hit:
-                    for enemy in enemy_hit:
-                        enemy.health -= 1
-                        if enemy.health <= 0:
-                            if enemy.has_drop:
-                                drop_type = choice(['health', 'shield'])
-                                self.drops.add(Drop(drop_type, display_height, enemy.rect.center))
-                            enemy.kill()
-                            if self.combo <= 29:
-                                self.combo += 1
-                                self.combo_bonus = self.combo * 10
-                            self.score += (enemy.value + self.combo_bonus)
-                    self.explosion_audio.play()  # Play explosion sound
-                    laser.kill()
+                    #DI GUMAGANA YUNG COLLISIONS SA ENEMY!
+                    if pygame.sprite.spritecollide(laser, self.enemies, False, pygame.sprite.collide_mask):
+                        for enemy in enemy_hit:
+                            enemy.health -= 1
+                            if enemy.health <= 0:
+                                if enemy.has_drop:
+                                    drop_type = choice(['health', 'shield'])
+                                    self.drops.add(Drop(drop_type, display_height, enemy.rect.center))
+                                enemy.kill()
+                                if self.combo <= 29:
+                                    self.combo += 1
+                                    self.combo_bonus = self.combo * 10
+                                self.score += (enemy.value + self.combo_bonus)
+                        self.explosion_audio.play()  # Play explosion sound
+                        laser.kill()
                 boss_hit = pygame.sprite.spritecollide(laser, self.boss, False)
-                if boss_hit: 
-                    self.boss.sprite.health -= 1
-                    if self.boss.sprite.health <= 0:
-                        if self.combo <= 29:
-                                self.combo += 1
-                                self.combo_bonus = self.combo * 10
-                        self.score += (self.boss.sprite.value + self.combo_bonus)
-                    self.explosion_audio.play()
-                    laser.kill()
+                if boss_hit:
+                    if pygame.sprite.spritecollide(laser, self.boss, False, pygame.sprite.collide_mask): 
+                        self.boss.sprite.health -= 1
+                        if self.boss.sprite.health <= 0:
+                            if self.combo <= 29:
+                                    self.combo += 1
+                                    self.combo_bonus = self.combo * 10
+                            self.score += (self.boss.sprite.value + self.combo_bonus)
+                            self.boss.sprite.kill()
+                        self.explosion_audio.play()
+                        laser.kill()
 
         # Enemy lasers
         if self.enemy_lasers:
             for laser in self.enemy_lasers:
                 if pygame.sprite.spritecollide(laser, self.player, False):
-                    if not self.is_shielded:
-                        self.player.sprite.health -= 1
-                        self.damaged()
-                        self.combo = 0
-                        self.combo_bonus = self.combo * 10
-                    if self.player.sprite.health <= 0:
-                        self.game_over = True  # Set game over state
-                        self.handle_high_scores()
-                    self.explosion_audio.play()  # Play explosion sound
-                    laser.kill()
-
-        # Enemy collisions
-        if self.enemies:
-            for enemy in self.enemies:
-                if pygame.sprite.spritecollide(enemy, self.player, False):
-                    if not self.is_shielded:
-                        self.player.sprite.health -= 1
-                        self.damaged()
-                        self.combo = 0
-                        self.combo_bonus = self.combo * 10
-                    if self.player.sprite.health <= 0:
-                        self.game_over = True # Set game over state
-                        self.handle_high_scores()  
-                    self.explosion_audio.play()  # Play explosion sound
-                    enemy.kill()
-
-        # Boss moves collisions
-        if self.boss:
-            if self.boss.sprite.move_sprites:
-                for fist in self.boss.sprite.move_sprites:
-                    if pygame.sprite.spritecollide(fist, self.player, False):
+                    if pygame.sprite.spritecollide(laser, self.player, False, pygame.sprite.collide_mask):
                         if not self.is_shielded:
                             self.player.sprite.health -= 1
                             self.damaged()
@@ -299,20 +273,54 @@ class Game:
                             self.game_over = True  # Set game over state
                             self.handle_high_scores()
                         self.explosion_audio.play()  # Play explosion sound
-                        fist.kill()       
+                        laser.kill()
+
+        # Enemy collisions
+        if self.enemies:
+            for enemy in self.enemies:
+                if pygame.sprite.spritecollide(enemy, self.player, False):
+                    if pygame.sprite.spritecollide(enemy, self.player, False, pygame.sprite.collide_mask):
+                        if not self.is_shielded:
+                            self.player.sprite.health -= 1
+                            self.damaged()
+                            self.combo = 0
+                            self.combo_bonus = self.combo * 10
+                        if self.player.sprite.health <= 0:
+                            self.game_over = True # Set game over state
+                            self.handle_high_scores()  
+                        self.explosion_audio.play()  # Play explosion sound
+                        enemy.kill()
+
+        # Boss moves collisions
+        if self.boss:
+            if self.boss.sprite.move_sprites:
+                for fist in self.boss.sprite.move_sprites:
+                    if pygame.sprite.spritecollide(fist, self.player, False):
+                        if pygame.sprite.spritecollide(fist, self.player, False, pygame.sprite.collide_mask):
+                            if not self.is_shielded:
+                                self.player.sprite.health -= 1
+                                self.damaged()
+                                self.combo = 0
+                                self.combo_bonus = self.combo * 10
+                            if self.player.sprite.health <= 0:
+                                self.game_over = True  # Set game over state
+                                self.handle_high_scores()
+                            self.explosion_audio.play()  # Play explosion sound
+                            fist.kill()       
 
 
         # Drop collisions
         if self.drops: 
             for drop in self.drops: 
                 if pygame.sprite.spritecollide(drop, self.player, False):
-                    if drop.type == 'health':
-                        if self.player.sprite.health < self.player.sprite.max_health:
-                            self.player.sprite.health += 1
-                    elif drop.type == 'shield':
-                        if self.shield_amount < self.shield_max_amount:
-                            self.shield_amount += 1
-                    drop.kill()
+                    if pygame.sprite.spritecollide(drop, self.player, False, pygame.sprite.collide_mask):
+                        if drop.type == 'health':
+                            if self.player.sprite.health < self.player.sprite.max_health:
+                                self.player.sprite.health += 1
+                        elif drop.type == 'shield':
+                            if self.shield_amount < self.shield_max_amount:
+                                self.shield_amount += 1
+                        drop.kill()
     def display_score(self):
         score_surf = self.font.render(f'{self.score}', False, 'white')
         score_rect = score_surf.get_rect(topleft=(arcade_screen_left + 10, arcade_screen_top))
