@@ -3,7 +3,7 @@ from player import Player
 from enemy import Enemy
 from random import randint, choice
 from laser import Laser
-from menu import Menu
+from menu import Menu, High_Scores, Pause
 from score import show_highscore_window, handle_fresh_file
 from timer import Timer 
 from drops import Drop
@@ -12,33 +12,19 @@ from boss import Boss
 
 #================Main Menu===============#
 # Start Game
-def start_game():
-    print("Game started!")
-   
+
 # Exit Game
-def quit_game():
-    pygame.quit()  # Quit pygame
-    sys.exit()  # Exit program
+
 
 # Menu Selection
-def handle_menu_selection(menu, screen):
-    if menu.menu_items[menu.selected_item] == "Start Game":
-        start_game()  
-        return False 
-     
-    elif menu.menu_items[menu.selected_item] == "High Scores":
-        show_highscore_window(screen)  # Call the function from high.py
 
-    elif menu.menu_items[menu.selected_item] == "Quit":
-        quit_game()  
-    return True  
 
 # Main function for the Menu
 def main():
     pygame.init()
     handle_fresh_file()
 
-    screen_width, screen_height = 800, 600
+    screen_width, screen_height = 1920, 1080
     screen = pygame.display.set_mode((screen_width, screen_height))
 
     menu = Menu(screen, screen_width, screen_height)
@@ -64,8 +50,6 @@ def main():
     pygame.quit()
 
 # runs main    
-if __name__ == "__main__":
-    main()
 
 #-----------------------------------------------------------------------------------------#
 #==================== Game Logic =====================================#
@@ -73,6 +57,11 @@ if __name__ == "__main__":
 # Game elements
 class Game:
     def __init__(self):
+        # Menu
+        self.menu = Menu(screen, display_width, display_height)
+        self.high_scores = High_Scores(screen, display_width, display_height)
+        self.pause_menu = Pause(screen, display_width, display_height)
+
         # Player setup
         player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
@@ -87,7 +76,6 @@ class Game:
         self.spawn_enemy_timer = 150
         self.current_time = 0
         self.boss = pygame.sprite.GroupSingle()
-        
 
         # Score setup
         self.score = 0
@@ -108,18 +96,15 @@ class Game:
         self.explosion_audio.set_volume(0)
 
         # Game state
-        self.running = True
+        self.menu_running = True
+        self.game_running = False
         self.game_over = False
+        self.high_scores_running = False
         self.selection = 0  # 0 for Restart, 1 for Quit
         
         # Game clock
         self.tick = 60
         self.runtime = 0
-
-        # Extra windows
-        self.pause_menu = pygame.Surface((screen_width, display_height))
-        self.pause_menu.fill((0, 0, 0))
-        self.pause_menu.set_alpha(90)
 
         # For game over screen
         self.selection_timer = 100
@@ -150,6 +135,31 @@ class Game:
         # Layers
         self.layers = pygame.sprite.LayeredUpdates()
 
+    def start_game(self):
+        print("Game started!")
+        self.menu_running = False
+        self.game_running = True
+
+    def quit_game(self):
+        pygame.quit()  # Quit pygame
+        sys.exit()  # Exit program
+    
+    def show_highscores(self):
+        self.menu_running = False
+        self.high_scores_running = True
+
+    def handle_menu_selection(self):
+            if self.menu.menu_items[self.menu.selected_item] == "Start Game":
+                self.start_game()  
+                return False 
+            
+            elif self.menu.menu_items[self.menu.selected_item] == "High Scores":
+                self.show_highscores()
+                return False
+
+            elif self.menu.menu_items[self.menu.selected_item] == "Quit":
+                self.quit_game()  
+            return True  
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
             has_drop = False
@@ -231,7 +241,6 @@ class Game:
             for laser in self.player.sprite.lasers:
                 enemy_hit = pygame.sprite.spritecollide(laser, self.enemies, False)
                 if enemy_hit:
-                    #DI GUMAGANA YUNG COLLISIONS SA ENEMY!
                     if pygame.sprite.spritecollide(laser, self.enemies, False, pygame.sprite.collide_mask):
                         for enemy in enemy_hit:
                             enemy.health -= 1
@@ -363,7 +372,6 @@ class Game:
         menu_rect = menu_text.get_rect(center=(screen_width / 2, display_height / 1.4))
         quit_rect = quit_text.get_rect(center=(screen_width / 2, display_height / 1.3))
         
-
         screen.blit(game_over_text, game_over_rect)
         screen.blit(score_text, score_rect)
         screen.blit(restart_text, restart_rect)
@@ -417,7 +425,7 @@ class Game:
             
     def reset_game(self):
         # Reset all variables to their initial states 
-        self.running = True
+        self.game_running = True
         player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
         self.enemies.empty()
@@ -435,28 +443,11 @@ class Game:
         self.explosion_audio.set_volume(0.5)  # Ensure explosion audio is enabled again
 
     def pause_game(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_ESCAPE] and self.running == True:
-            self.running = False
-        if keys[pygame.K_RETURN] and self.running == False:
-            self.running = True
-
-    def display_pause_menu(self):
-        screen.blit(self.pause_menu, (0, 0))
-        pause_surf = self.maj_font.render("Paused", False, 'white')
-        pause_rect = pause_surf.get_rect(center=(screen_width / 2, 200))
-
-        return_surf = self.font.render("Enter = Unpause", False, 'white')
-        return_rect = return_surf.get_rect(center=(screen_width / 2, 350))
-        screen.blit(pause_surf, pause_rect)
-        screen.blit(return_surf, return_rect)
+        self.game_running = not self.game_running
 
     def add_to_layers(self):
         pass
     def run(self):
-        # Check if game is getting paused
-        self.pause_game()
-        
         if self.game_over:
             self.display_game_over()
             if pygame.time.get_ticks() - self.selection_time >= self.selection_timer:
@@ -465,7 +456,11 @@ class Game:
 
         # Update 
         # Is inside of an if-else because the game runs normally otherwise
-        if self.running:
+        if self.menu_running:
+            self.menu.run()
+        elif self.high_scores_running:
+            self.high_scores.run()
+        elif self.game_running:
             # Spawn enemies
             self.spawn_enemy()
             self.spawn_enemy_reset()
@@ -482,8 +477,7 @@ class Game:
             self.boss.update()
         else: 
             # Display pause menu 
-            self.display_pause_menu()
-            
+            self.pause_menu.run()
         # Draw
         self.player.draw(screen)
         self.player.sprite.lasers.draw(screen)
@@ -501,7 +495,6 @@ class Game:
         self.CRT.draw()
         self.arcade.draw()
             
-
 # For extra graphics
 class CRT(pygame.sprite.Sprite):
   def __init__(self):
@@ -530,11 +523,10 @@ class Arcade(pygame.sprite.Sprite):
     
     def draw(self):
         screen.blit(self.arcade, (0,0))
+
 # Main game loop
 if __name__ == '__main__':
   pygame.init()
-  
-  
   display_width = 1920
   display_height = 1080
   screen_width = 400
@@ -546,17 +538,42 @@ if __name__ == '__main__':
   screen = pygame.display.set_mode((display_width, display_height))
   clock = pygame.time.Clock()
   
+  game_running = False
+  menu_running = True
+  game_over_running = False
   game = Game()
   ENEMYLASER = pygame.USEREVENT + 1
   pygame.time.set_timer(ENEMYLASER, 2000)
 
+  running = True
   # Main loop
-  while True:
+  while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        
+        if game.menu_running: 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    game.menu.selected_item = (game.menu.selected_item - 1) % len(game.menu.menu_items)
+                elif event.key == pygame.K_DOWN:  
+                    game.menu.selected_item = (game.menu.selected_item + 1) % len(game.menu.menu_items)
+                elif event.key == pygame.K_RETURN: 
+                    game.menu_running = game.handle_menu_selection()  # Pass the screen to the handler
+        elif game.high_scores_running:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # Press ESC to return to the main menu
+                    game.high_scores_running = False
+                    game.menu_running = True
+        elif game.game_running: 
+            if event.type == pygame.KEYDOWN: 
+                if event.key == pygame.K_ESCAPE:
+                    game.pause_game()
+        else: 
+            if event.type == pygame.KEYDOWN: 
+                if event.key == pygame.K_RETURN:
+                    game.pause_game()
+
         if event.type == ENEMYLASER:
             game.enemy_shoot()
 
@@ -568,6 +585,8 @@ if __name__ == '__main__':
                 sys.exit()
 
     screen.fill((30,30,30))
+    
     game.run()
+    
     pygame.display.flip()
     clock.tick(game.tick)
