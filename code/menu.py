@@ -42,7 +42,9 @@ class High_Scores:
         self.FONT = pygame.font.Font(None, 36)
         self.TITLE_FONT = pygame.font.Font('font\\Pixeled.ttf', 45)
         self.MESSAGE_FONT= pygame.font.Font('font\\Pixeled.ttf', 25)
+        self.read_highscores()
 
+    def read_highscores(self):
         with open('records\\high_scores.txt', 'r') as file:
             content = file.readlines()
             self.first_score = content[0].strip('\n')  
@@ -118,7 +120,7 @@ class Pause:
         self.display_return()
 
 class Game_Over:
-    def __init__(self, screen, screen_width, screen_height, score):
+    def __init__(self, screen, screen_width, screen_height):
         self.screen = screen
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -126,20 +128,12 @@ class Game_Over:
         self.items_font = pygame.font.Font('font\\Pixeled.ttf', 15)
         self.menu_items = ["Restart","Menu", "Quit"]
         self.selected_item = 0
-        self.score = score
 
     def display_title(self):
         title_surf = self.title_font.render("GAME OVER", False, 'white')
         title_rect = title_surf.get_rect(center=(self.screen_width / 2, 500))
         self.screen.blit(title_surf, title_rect)
     
-    def display_details(self):
-        self.score_text = self.items_font.render(f"Your Score: {self.score}", True, (255, 255, 255))
-        
-        self.score_rect = self.score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
-      
-        self.screen.blit(self.score_text, self.score_rect)
-
     def display_menu(self):
         for index, item in enumerate(self.menu_items):
             color = 'red' if index == self.selected_item else 'gray'
@@ -150,7 +144,6 @@ class Game_Over:
     def run(self):
         # Draw the title and menu options
         self.display_title()
-        self.display_details()
         self.display_menu()
 
 

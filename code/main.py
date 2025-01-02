@@ -57,6 +57,9 @@ def main():
 # Game elements
 class Game:
     def __init__(self):
+
+        handle_fresh_file()
+
         # Player setup
         player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
@@ -122,19 +125,20 @@ class Game:
         # Timers
         self.timers = {
             'shield' : Timer(1500, func = self.toggle_shield),
-            'spawn_boss': Timer(5000, autostart = True, func = self.spawn_boss),
-            'spawn_enemies': Timer(1000, autostart = True, func = self.spawn_enemy_flag)
+            'spawn_boss': Timer(10000, func = self.spawn_boss),
+            'spawn_enemies': Timer(2000, func = self.spawn_enemy_flag)
         }
 
         # Arcade 
         self.arcade = Arcade()
         self.CRT = CRT()
+        self.flicker = Arcade_Flicker()
 
         # Menu
         self.menu = Menu(screen, display_width, display_height)
         self.high_scores = High_Scores(screen, display_width, display_height)
         self.pause_menu = Pause(screen, display_width, display_height)
-        self.game_over_menu = Game_Over(screen, display_width, display_height, self.score)
+        self.game_over_menu = Game_Over(screen, display_width, display_height)
 
         # Layers
         self.layers = pygame.sprite.LayeredUpdates()
@@ -143,6 +147,8 @@ class Game:
         print("Game started!")
         self.menu_running = False
         self.game_running = True
+        self.timers['spawn_boss'].activate()
+        self.timers['spawn_enemies'].activate()
 
     def quit_game(self):
         pygame.quit()  # Quit pygame
@@ -259,8 +265,8 @@ class Game:
             timer.update()
 
     def reset_timers(self):
-        for timer in self.timers.values():
-            timer.reset()
+        self.timers['spawn_boss'].activate()
+        self.timers['spawn_enemies'].activate()
 
     def collision_check(self):
         # Player lasers
@@ -292,6 +298,7 @@ class Game:
                                     self.combo_bonus = self.combo * 10
                             self.score += (self.boss.sprite.value + self.combo_bonus)
                             self.boss.sprite.kill()
+                            self.timers['spawn_boss'].activate()
                         self.explosion_audio.play()
                         laser.kill()
 
@@ -381,11 +388,13 @@ class Game:
         shield_rect = shield_surf.get_rect(bottomleft=(arcade_screen_left - 10, arcade_screen_bottom))
         screen.blit(shield_surf, shield_rect)
 
-    def display_game_over(self):
-        pygame.mixer.music.stop()
-        self.laser_audio.stop()
-        self.explosion_audio.stop()
+    def display_game_over_score(self):
+        self.high_scores.read_highscores()
+        game_over_score_text = self.font.render(f"Your Score: {self.score}", True, (255, 255, 255))
         
+        game_over_score_rect = game_over_score_text.get_rect(center=(display_width / 2, display_height / 2))
+      
+        screen.blit(game_over_score_text, game_over_score_rect)
 
     def handle_high_scores(self):
         with open('records\\high_scores.txt', 'r') as file:
@@ -431,6 +440,7 @@ class Game:
     def run(self):
         if self.game_over:
             self.game_over_menu.run()
+            self.display_game_over_score()
 
         # Update 
         # Is inside of an if-else because the game runs normally otherwise
@@ -475,6 +485,7 @@ class Game:
         
         self.CRT.draw()
         self.arcade.draw()
+        self.flicker.draw()
         
             
 # For extra graphics
@@ -506,6 +517,16 @@ class Arcade(pygame.sprite.Sprite):
     def draw(self):
         screen.blit(self.arcade, (0,0))
 
+class Arcade_Flicker(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.flicker = pygame.image.load('images\\flicker.png').convert_alpha()
+        self.flicker = pygame.transform.scale(self.flicker, (1920, 1080))
+        self.rect = self.flicker.get_rect(center=(display_width / 2, display_height / 2))
+    
+    def draw(self):
+        self.flicker.set_alpha(randint(10, 15))
+        screen.blit(self.flicker, self.rect)
 # Main game loop
 if __name__ == '__main__':
   pygame.init()

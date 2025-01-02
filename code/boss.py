@@ -15,7 +15,7 @@ class Boss(pygame.sprite.Sprite):
     self.health_scaling = round(self.spawn_time / 500)
     self.has_drop = has_drop
     self.layer = layer
-    self.health = 100
+    self.health = 10
     self.value = 5000
     self.left_constraint = arcade_screen_left
     self.right_constraint = arcade_screen_right

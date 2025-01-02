@@ -27,7 +27,3 @@ class Timer:
       if current_time - self.start_time >= self.duration:
         if self.func: self.func()
         self.deactivate()
-  
-  def reset(self):
-    if self.autostart:
-      self.activate()
