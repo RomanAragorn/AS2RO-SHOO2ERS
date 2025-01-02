@@ -39,7 +39,7 @@ class High_Scores:
         self.WHITE =  (255, 255, 255)
         self.BLACK = (0, 0, 0)
 
-        self.FONT = pygame.font.Font(None, 36)
+        self.FONT = pygame.font.Font('font\\Pixeled.ttf', 20)
         self.TITLE_FONT = pygame.font.Font('font\\Pixeled.ttf', 45)
         self.MESSAGE_FONT= pygame.font.Font('font\\Pixeled.ttf', 25)
         self.read_highscores()
