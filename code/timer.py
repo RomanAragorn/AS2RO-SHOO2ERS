@@ -7,7 +7,8 @@ class Timer:
     self.active = False
     self.repeat = repeat
     self.func = func
-    if autostart: 
+    self.autostart = autostart 
+    if self.autostart: 
       self.activate()
 
   def activate(self):
@@ -26,3 +27,7 @@ class Timer:
       if current_time - self.start_time >= self.duration:
         if self.func: self.func()
         self.deactivate()
+  
+  def reset(self):
+    if self.autostart:
+      self.activate()

@@ -124,44 +124,35 @@ class Game_Over:
         self.screen_height = screen_height
         self.title_font = pygame.font.Font('font\\Pixeled.ttf', 30)
         self.items_font = pygame.font.Font('font\\Pixeled.ttf', 15)
-        self.selection = 0
+        self.menu_items = ["Restart","Menu", "Quit"]
+        self.selected_item = 0
         self.score = score
 
     def display_title(self):
-        self.title_surf = self.title_font.render("GAME OVER", False, 'white')
-        self.title_rect = self.title_surf.get_rect(center=(self.screen_width / 2, 500))
-        self.screen.blit(self.title_surf, self.title_rect)
-
+        title_surf = self.title_font.render("GAME OVER", False, 'white')
+        title_rect = title_surf.get_rect(center=(self.screen_width / 2, 500))
+        self.screen.blit(title_surf, title_rect)
+    
     def display_details(self):
         self.score_text = self.items_font.render(f"Your Score: {self.score}", True, (255, 255, 255))
-        self.restart_text = self.items_font.render("Restart", True, (255, 255, 255))
-        self.menu_text = self.items_font.render("Menu", False, (255, 255, 255))
-        self.quit_text = self.items_font.render("Quit", True, (255, 255, 255))
-
-        # Center the text
-        self.score_rect = self.score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
-        self.restart_rect = self.restart_text.get_rect(center=(self.screen_width / 2, self.screen_height / 1.5))
-        self.menu_rect = self.menu_text.get_rect(center=(self.screen_width / 2, self.screen_height / 1.4))
-        self.quit_rect = self.quit_text.get_rect(center=(self.screen_width / 2, self.screen_height / 1.3))
         
+        self.score_rect = self.score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
+      
         self.screen.blit(self.score_text, self.score_rect)
-        self.screen.blit(self.restart_text, self.restart_rect)
-        self.screen.blit(self.menu_text, self.menu_rect)
-        self.screen.blit(self.quit_text,self. quit_rect)
 
-        # Highlight selected option
-        if self.selection == 0:
-            self.restart_text = self.items_font.render("Restart", True, (255, 0, 0))  # Red color for selection
-        elif self.selection == 1:
-            self.menu_text = self.items_font.render("Menu", True, (255, 0, 0))  # Red color for selection
-        elif self.selection == 2:
-            self.quit_text = self.items_font.render("Quit", True, (255, 0, 0))  # Red color for selection
-
-        self.screen.blit(self.restart_text, self.restart_rect)
-        self.screen.blit(self.menu_text, self.menu_rect)
-        self.screen.blit(self.quit_text, self.quit_rect)
+    def display_menu(self):
+        for index, item in enumerate(self.menu_items):
+            color = 'red' if index == self.selected_item else 'gray'
+            item_surf = self.items_font.render(item, True, color)
+            item_rect = item_surf.get_rect(center=(self.screen_width / 2, 700 + index * 50))
+            self.screen.blit(item_surf, item_rect)
 
     def run(self):
         # Draw the title and menu options
         self.display_title()
         self.display_details()
+        self.display_menu()
+
+
+    
+   

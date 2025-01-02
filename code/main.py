@@ -3,7 +3,7 @@ from player import Player
 from enemy import Enemy
 from random import randint, choice
 from laser import Laser
-from menu import Menu, High_Scores, Pause
+from menu import Menu, High_Scores, Pause, Game_Over
 from score import show_highscore_window, handle_fresh_file
 from timer import Timer 
 from drops import Drop
@@ -57,11 +57,6 @@ def main():
 # Game elements
 class Game:
     def __init__(self):
-        # Menu
-        self.menu = Menu(screen, display_width, display_height)
-        self.high_scores = High_Scores(screen, display_width, display_height)
-        self.pause_menu = Pause(screen, display_width, display_height)
-
         # Player setup
         player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
@@ -69,6 +64,7 @@ class Game:
         self.player_mask = pygame.mask.from_surface(self.player_surface)
 
         # Enemy setup
+        self.spawn_enemy_start = False
         self.enemies = pygame.sprite.Group()
         self.enemy_lasers = pygame.sprite.Group()
         self.spawn_enemy_ready = True
@@ -101,6 +97,7 @@ class Game:
         self.game_over = False
         self.high_scores_running = False
         self.selection = 0  # 0 for Restart, 1 for Quit
+        self.is_paused = False
         
         # Game clock
         self.tick = 60
@@ -125,12 +122,19 @@ class Game:
         # Timers
         self.timers = {
             'shield' : Timer(1500, func = self.toggle_shield),
-            'spawn_boss': Timer(2000, autostart = True, func = self.spawn_boss)
+            'spawn_boss': Timer(5000, autostart = True, func = self.spawn_boss),
+            'spawn_enemies': Timer(1000, autostart = True, func = self.spawn_enemy_flag)
         }
 
         # Arcade 
         self.arcade = Arcade()
         self.CRT = CRT()
+
+        # Menu
+        self.menu = Menu(screen, display_width, display_height)
+        self.high_scores = High_Scores(screen, display_width, display_height)
+        self.pause_menu = Pause(screen, display_width, display_height)
+        self.game_over_menu = Game_Over(screen, display_width, display_height, self.score)
 
         # Layers
         self.layers = pygame.sprite.LayeredUpdates()
@@ -160,6 +164,25 @@ class Game:
             elif self.menu.menu_items[self.menu.selected_item] == "Quit":
                 self.quit_game()  
             return True  
+    
+    def handle_game_over_selection(self):
+            if self.game_over_menu.menu_items[self.game_over_menu.selected_item] == "Restart":
+                self.reset_game()  
+                return False 
+                
+            elif self.game_over_menu.menu_items[self.game_over_menu.selected_item] == "Menu":
+                self.game_running = False
+                self.game_over = False
+                self.menu_running = True
+                return False
+
+            elif self.game_over_menu.menu_items[self.game_over_menu.selected_item] == "Quit":
+                self.quit_game()  
+            return True  
+    
+    def spawn_enemy_flag(self):
+        self.spawn_enemy_start = not self.spawn_enemy_start
+
     def spawn_enemy(self):
         if self.spawn_enemy_ready:
             has_drop = False
@@ -235,6 +258,10 @@ class Game:
         for timer in self.timers.values(): 
             timer.update()
 
+    def reset_timers(self):
+        for timer in self.timers.values():
+            timer.reset()
+
     def collision_check(self):
         # Player lasers
         if self.player.sprite.lasers:
@@ -279,7 +306,8 @@ class Game:
                             self.combo = 0
                             self.combo_bonus = self.combo * 10
                         if self.player.sprite.health <= 0:
-                            self.game_over = True  # Set game over state
+                            self.game_over = True
+                            self.game_running = False  # Set game over state
                             self.handle_high_scores()
                         self.explosion_audio.play()  # Play explosion sound
                         laser.kill()
@@ -295,7 +323,8 @@ class Game:
                             self.combo = 0
                             self.combo_bonus = self.combo * 10
                         if self.player.sprite.health <= 0:
-                            self.game_over = True # Set game over state
+                            self.game_over = True
+                            self.game_running = False # Set game over state
                             self.handle_high_scores()  
                         self.explosion_audio.play()  # Play explosion sound
                         enemy.kill()
@@ -312,7 +341,8 @@ class Game:
                                 self.combo = 0
                                 self.combo_bonus = self.combo * 10
                             if self.player.sprite.health <= 0:
-                                self.game_over = True  # Set game over state
+                                self.game_over = True
+                                self.game_running = False  # Set game over state
                                 self.handle_high_scores()
                             self.explosion_audio.play()  # Play explosion sound
                             fist.kill()       
@@ -356,39 +386,6 @@ class Game:
         self.laser_audio.stop()
         self.explosion_audio.stop()
         
-        screen.fill((0, 0, 0))
-
-        # Display the game over message
-        game_over_text = self.font.render("GAME OVER", True, (255, 0, 0))
-        score_text = self.font.render(f"Your Score: {self.score}", True, (255, 255, 255))
-        restart_text = self.font.render("Restart", True, (255, 255, 255))
-        menu_text = self.font.render("Menu", False, (255, 255, 255))
-        quit_text = self.font.render("Quit", True, (255, 255, 255))
-
-        # Center the text
-        game_over_rect = game_over_text.get_rect(center=(screen_width / 2, display_height / 4))
-        score_rect = score_text.get_rect(center=(screen_width / 2, display_height / 2))
-        restart_rect = restart_text.get_rect(center=(screen_width / 2, display_height / 1.5))
-        menu_rect = menu_text.get_rect(center=(screen_width / 2, display_height / 1.4))
-        quit_rect = quit_text.get_rect(center=(screen_width / 2, display_height / 1.3))
-        
-        screen.blit(game_over_text, game_over_rect)
-        screen.blit(score_text, score_rect)
-        screen.blit(restart_text, restart_rect)
-        screen.blit(menu_text, menu_rect)
-        screen.blit(quit_text, quit_rect)
-
-        # Highlight selected option
-        if self.selection == 0:
-            restart_text = self.font.render("Restart", True, (255, 0, 0))  # Red color for selection
-        elif self.selection == 1:
-            menu_text = self.font.render("Menu", True, (255, 0, 0))  # Red color for selection
-        elif self.selection == 2:
-            quit_text = self.font.render("Quit", True, (255, 0, 0))  # Red color for selection
-
-        screen.blit(restart_text, restart_rect)
-        screen.blit(menu_text, menu_rect)
-        screen.blit(quit_text, quit_rect)
 
     def handle_high_scores(self):
         with open('records\\high_scores.txt', 'r') as file:
@@ -402,27 +399,6 @@ class Game:
         os.system("code\\high_score")
         os.system("code\\move_to_hs")
     
-    def handle_game_over_input(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:  # Move up
-            self.selection_time = pygame.time.get_ticks()
-            if self.selection > 0:
-                self.selection -= 1
-        elif keys[pygame.K_DOWN]:  # Move down
-            if self.selection < 2:
-                self.selection_time = pygame.time.get_ticks()
-                self.selection += 1
- 
-        if keys[pygame.K_RETURN]:  # Enter key to select
-            if self.selection == 0:
-                self.reset_game()
-                pygame.mixer.music.stop()
-            elif self.selection == 1:
-                pass
-            elif self.selection == 2:
-                pygame.quit()
-                sys.exit()
-            
     def reset_game(self):
         # Reset all variables to their initial states 
         self.game_running = True
@@ -430,12 +406,16 @@ class Game:
         self.player = pygame.sprite.GroupSingle(player_sprite)
         self.enemies.empty()
         self.enemy_lasers.empty()
+        self.drops.empty()
+        self.boss.empty()
+        self.reset_timers()
         self.score = 0
         self.game_over = False
         self.selection = 0  # Reset selection to "Restart"
         self.runtime = 0
         self.current_time = 0
         self.spawn_enemy_time = 0
+        self.spawn_enemy_start = False
 
         # Restart the background music and SFX when the game restarts
         
@@ -443,16 +423,14 @@ class Game:
         self.explosion_audio.set_volume(0.5)  # Ensure explosion audio is enabled again
 
     def pause_game(self):
-        self.game_running = not self.game_running
+        #self.game_running = not self.game_running
+        self.is_paused = not self.is_paused
 
     def add_to_layers(self):
         pass
     def run(self):
         if self.game_over:
-            self.display_game_over()
-            if pygame.time.get_ticks() - self.selection_time >= self.selection_timer:
-                self.handle_game_over_input()  # Handle user input on the game over screen
-            return  # Stop the game logic
+            self.game_over_menu.run()
 
         # Update 
         # Is inside of an if-else because the game runs normally otherwise
@@ -462,38 +440,42 @@ class Game:
             self.high_scores.run()
         elif self.game_running:
             # Spawn enemies
-            self.spawn_enemy()
-            self.spawn_enemy_reset()
+            if self.spawn_enemy_start:
+                self.spawn_enemy()
+                self.spawn_enemy_reset()
 
+            self.player.draw(screen)
+            self.player.sprite.lasers.draw(screen)
+            self.enemies.draw(screen)
+            self.enemy_lasers.draw(screen)
+            self.drops.draw(screen)
+            self.display_score()
+            self.display_lives()
+            self.display_combo()
+            self.display_shield()
+            self.runtime += 1
+            if self.boss:
+                self.boss.draw(screen)
+                self.boss.sprite.move_sprites.draw(screen)
+            
+            if self.is_paused == False:
             # Collision checking
-            self.collision_check()
-            self.player.update()
-            self.enemies.update()
-            self.enemy_lasers.update()
-            self.increment_point_flag()
-            self.drops.update()
-            self.update_timers()
-            self.shielded()
-            self.boss.update()
-        else: 
-            # Display pause menu 
-            self.pause_menu.run()
-        # Draw
-        self.player.draw(screen)
-        self.player.sprite.lasers.draw(screen)
-        self.enemies.draw(screen)
-        self.enemy_lasers.draw(screen)
-        self.drops.draw(screen)
-        self.display_score()
-        self.display_lives()
-        self.display_combo()
-        self.display_shield()
-        self.runtime += 1
-        if self.boss:
-            self.boss.draw(screen)
-            self.boss.sprite.move_sprites.draw(screen)
+                self.collision_check()
+                self.player.update()
+                self.enemies.update()
+                self.enemy_lasers.update()
+                self.increment_point_flag()
+                self.drops.update()
+                self.update_timers()
+                self.shielded()
+                self.boss.update()
+            elif self.is_paused == True: 
+                # Display pause menu 
+                self.pause_menu.run()
+        
         self.CRT.draw()
         self.arcade.draw()
+        
             
 # For extra graphics
 class CRT(pygame.sprite.Sprite):
@@ -565,14 +547,23 @@ if __name__ == '__main__':
                 if event.key == pygame.K_ESCAPE:  # Press ESC to return to the main menu
                     game.high_scores_running = False
                     game.menu_running = True
-        elif game.game_running: 
-            if event.type == pygame.KEYDOWN: 
-                if event.key == pygame.K_ESCAPE:
-                    game.pause_game()
-        else: 
-            if event.type == pygame.KEYDOWN: 
-                if event.key == pygame.K_RETURN:
-                    game.pause_game()
+        elif game.game_running:
+            if not game.is_paused: 
+                if event.type == pygame.KEYDOWN: 
+                    if event.key == pygame.K_ESCAPE:
+                        game.pause_game()
+            elif game.is_paused:
+                if event.type == pygame.KEYDOWN: 
+                    if event.key == pygame.K_RETURN:
+                        game.pause_game()
+        elif game.game_over:
+             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    game.game_over_menu.selected_item = (game.game_over_menu.selected_item - 1) % len(game.game_over_menu.menu_items)
+                elif event.key == pygame.K_DOWN:  
+                    game.game_over_menu.selected_item = (game.game_over_menu.selected_item + 1) % len(game.game_over_menu.menu_items)
+                elif event.key == pygame.K_RETURN: 
+                    game.game_over = game.handle_game_over_selection() # Pass the screen to the handler
 
         if event.type == ENEMYLASER:
             game.enemy_shoot()
