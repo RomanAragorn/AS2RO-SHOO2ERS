@@ -1,6 +1,7 @@
 import pygame
 import sys
 
+#Game Menu#
 class Menu:
     def __init__(self, screen, screen_width, screen_height):
         self.screen = screen
