@@ -16,7 +16,7 @@ class Boss(pygame.sprite.Sprite):
     self.has_drop = has_drop
     self.layer = layer
     self.health = 10
-    self.value = 5000
+    self.value = 50000
     self.left_constraint = arcade_screen_left
     self.right_constraint = arcade_screen_right
     self.move_sprites = pygame.sprite.Group()

@@ -133,9 +133,13 @@ class Game:
         self.arcade = Arcade()
         self.CRT = CRT()
         self.flicker = Arcade_Flicker()
+        self.space = pygame.image.load('images\\space.png').convert_alpha()
+        self.space = pygame.transform.scale(self.space, (1920, 1080))
 
         # Menu
         self.menu = Menu(screen, display_width, display_height)
+        self.menu_bg = pygame.image.load('images\\menu.png').convert_alpha()
+        self.menu_rect = self.menu_bg.get_rect(midbottom=(display_width/2, 1500))
         self.high_scores = High_Scores(screen, display_width, display_height)
         self.pause_menu = Pause(screen, display_width, display_height)
         self.game_over_menu = Game_Over(screen, display_width, display_height)
@@ -449,6 +453,7 @@ class Game:
         elif self.high_scores_running:
             self.high_scores.run()
         elif self.game_running:
+            
             # Spawn enemies
             if self.spawn_enemy_start:
                 self.spawn_enemy()
@@ -513,6 +518,7 @@ class Arcade(pygame.sprite.Sprite):
         super().__init__()
         self.arcade = pygame.image.load('images\\arcade.png').convert_alpha()
         self.arcade = pygame.transform.scale(self.arcade, (1920, 1080))
+       
     
     def draw(self):
         screen.blit(self.arcade, (0,0))
@@ -595,9 +601,10 @@ if __name__ == '__main__':
             elif event.key == pygame.K_q:
                 pygame.quit()
                 sys.exit()
-
-    screen.fill((30,30,30))
-    
+    if game.menu_running:
+        screen.blit(game.menu_bg, game.menu_rect)
+    elif game.game_running:
+        screen.blit(game.space, (0,0))
     game.run()
     
     pygame.display.flip()
