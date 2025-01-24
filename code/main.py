@@ -9,49 +9,6 @@ from timer import Timer
 from drops import Drop
 from boss import Boss
 
-
-#================Main Menu===============#
-# Start Game
-
-# Exit Game
-
-
-# Menu Selection
-
-
-# Main function for the Menu
-def main():
-    pygame.init()
-    handle_fresh_file()
-
-    screen_width, screen_height = 1920, 1080
-    screen = pygame.display.set_mode((screen_width, screen_height))
-
-    menu = Menu(screen, screen_width, screen_height)
-
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()  
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    menu.selected_item = (menu.selected_item - 1) % len(menu.menu_items)
-                elif event.key == pygame.K_DOWN:  
-                    menu.selected_item = (menu.selected_item + 1) % len(menu.menu_items)
-                elif event.key == pygame.K_RETURN: 
-                    running = handle_menu_selection(menu, screen)  # Pass the screen to the handler
-
-        screen.fill((0, 0, 0))
-        menu.run()
-        pygame.display.flip()
-
-    pygame.quit()
-
-# runs main    
-
-#-----------------------------------------------------------------------------------------#
 #==================== Game Logic =====================================#
 
 # Game elements
@@ -134,7 +91,7 @@ class Game:
         self.CRT = CRT()
         self.flicker = Arcade_Flicker()
         self.space = pygame.image.load('images\\space.png').convert_alpha()
-        self.space = pygame.transform.scale(self.space, (1920, 1080))
+        self.space = pygame.transform.scale(self.space, (display_width, display_height))
 
         # Menu
         self.menu = Menu(screen, display_width, display_height)
@@ -493,14 +450,13 @@ class Game:
         self.CRT.draw()
         self.arcade.draw()
         self.flicker.draw()
-        
-            
+                
 # For extra graphics
 class CRT(pygame.sprite.Sprite):
   def __init__(self):
     super().__init__()
     self.tv = pygame.image.load('images\\tv.png').convert_alpha()
-    self.tv = pygame.transform.scale(self.tv, (1920, 1080))
+    self.tv = pygame.transform.scale(self.tv, (display_width, display_height))
     self.rect = self.tv.get_rect(center=(display_width / 2, display_height / 2))
 
   def create_lines(self):
@@ -519,9 +475,8 @@ class Arcade(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.arcade = pygame.image.load('images\\arcade.png').convert_alpha()
-        self.arcade = pygame.transform.scale(self.arcade, (1920, 1080))
+        self.arcade = pygame.transform.scale(self.arcade, (display_width, display_height))
        
-    
     def draw(self):
         screen.blit(self.arcade, (0,0))
 
@@ -529,7 +484,7 @@ class Arcade_Flicker(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.flicker = pygame.image.load('images\\flicker.png').convert_alpha()
-        self.flicker = pygame.transform.scale(self.flicker, (1920, 1080))
+        self.flicker = pygame.transform.scale(self.flicker, (display_width, display_height))
         self.rect = self.flicker.get_rect(center=(display_width / 2, display_height / 2))
     
     def draw(self):
