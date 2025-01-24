@@ -13,9 +13,15 @@ class Menu:
         self.selected_item = 0
 
     def display_title(self):
-        title_surf = self.title_font.render("As2ro Shoo2ers", True, 'white')
-        title_rect = title_surf.get_rect(center=(self.screen_width / 2, 500))
-        self.screen.blit(title_surf, title_rect)
+        title_image = pygame.image.load('images\\text logo.png').convert_alpha()
+        title_image = pygame.transform.scale(title_image, (776, 200))
+        title_rect = title_image.get_rect(center=(self.screen_width / 2, 500))
+        self.screen.blit(title_image, title_rect)
+
+    def display_us(self):
+        us_surf = self.items_font.render("Group 4", True, (255, 255, 255))
+        us_rect = us_surf.get_rect(center=(self.screen_width / 2, 600))
+        self.screen.blit(us_surf, us_rect)
 
     def display_menu(self):
         for index, item in enumerate(self.menu_items):
@@ -27,6 +33,7 @@ class Menu:
     def run(self):
         # Draw the title and menu options
         self.display_title()
+        self.display_us()
         self.display_menu()
 
 class High_Scores:
@@ -89,7 +96,7 @@ class High_Scores:
         esc_message = self.MESSAGE_FONT.render("Press Esc to return", True, self.WHITE)
         esc_message_rect = esc_message.get_rect(center=(self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT - 100))
         self.screen.blit(esc_message, esc_message_rect)
-    
+
     def run(self):
         # Draw the title and menu options
         self.screen.fill((0,0,0))

@@ -42,14 +42,26 @@ class Game:
 
         # Audio setup
         self.music = pygame.mixer.Sound('audio\\music.wav')
-        self.music.set_volume(0)
+        self.music.set_volume(0.1)
         self.music.play(loops=-1)
 
         self.laser_audio = pygame.mixer.Sound('audio\\laser.wav')
-        self.laser_audio.set_volume(0)
+        self.laser_audio.set_volume(0.1)
 
         self.explosion_audio = pygame.mixer.Sound('audio\\explosion.wav')
-        self.explosion_audio.set_volume(0)
+        self.explosion_audio.set_volume(0.3)
+
+        self.hover = pygame.mixer.Sound('audio\\hover.mp3')
+        self.hover.set_volume(0.5)
+
+        self.select = pygame.mixer.Sound('audio\\select.mp3')
+        self.select.set_volume(0.5)
+
+        self.heal = pygame.mixer.Sound('audio\\heal.mp3')
+        self.heal.set_volume(0.5)
+
+        self.shield_audio = pygame.mixer.Sound('audio\\shield.mp3')
+        self.shield_audio.set_volume(0.5)
 
         # Game state
         self.menu_running = True
@@ -122,29 +134,35 @@ class Game:
 
     def handle_menu_selection(self):
             if self.menu.menu_items[self.menu.selected_item] == "Start Game":
+                self.select.play()
                 self.start_game()  
                 return False 
             
             elif self.menu.menu_items[self.menu.selected_item] == "High Scores":
+                self.select.play()
                 self.show_highscores()
                 return False
 
             elif self.menu.menu_items[self.menu.selected_item] == "Quit":
+                self.select.play()
                 self.quit_game()  
             return True  
     
     def handle_game_over_selection(self):
             if self.game_over_menu.menu_items[self.game_over_menu.selected_item] == "Restart":
+                self.select.play()
                 self.reset_game()  
                 return False 
                 
             elif self.game_over_menu.menu_items[self.game_over_menu.selected_item] == "Menu":
+                self.select.play()
                 self.game_running = False
                 self.game_over = False
                 self.menu_running = True
                 return False
 
             elif self.game_over_menu.menu_items[self.game_over_menu.selected_item] == "Quit":
+                self.select.play()
                 self.quit_game()  
             return True  
     
@@ -210,6 +228,7 @@ class Game:
 
     def shield_up(self):
         if self.shield_amount > 0: 
+            self.shield_audio.play()
             self.toggle_shield()
             self.timers['shield'].activate()
             self.shield_amount -= 1
@@ -322,6 +341,7 @@ class Game:
             for drop in self.drops: 
                 if pygame.sprite.spritecollide(drop, self.player, False):
                     if pygame.sprite.spritecollide(drop, self.player, False, pygame.sprite.collide_mask):
+                        self.heal.play()
                         if drop.type == 'health':
                             if self.player.sprite.health < self.player.sprite.max_health:
                                 self.player.sprite.health += 1
@@ -396,7 +416,7 @@ class Game:
         # Restart the background music and SFX when the game restarts
         
         self.laser_audio.set_volume(0.1)  # Ensure laser audio is enabled again
-        self.explosion_audio.set_volume(0.5)  # Ensure explosion audio is enabled again
+        self.explosion_audio.set_volume(0.3)  # Ensure explosion audio is enabled again
 
     def pause_game(self):
         #self.game_running = not self.game_running
@@ -524,6 +544,7 @@ if __name__ == '__main__':
             sys.exit()
         if game.menu_running: 
             if event.type == pygame.KEYDOWN:
+                game.hover.play()
                 if event.key == pygame.K_UP:
                     game.menu.selected_item = (game.menu.selected_item - 1) % len(game.menu.menu_items)
                 elif event.key == pygame.K_DOWN:  
@@ -546,6 +567,7 @@ if __name__ == '__main__':
                         game.pause_game()
         elif game.game_over:
              if event.type == pygame.KEYDOWN:
+                game.hover.play()
                 if event.key == pygame.K_UP:
                     game.game_over_menu.selected_item = (game.game_over_menu.selected_item - 1) % len(game.game_over_menu.menu_items)
                 elif event.key == pygame.K_DOWN:  
