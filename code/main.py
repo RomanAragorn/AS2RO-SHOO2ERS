@@ -515,6 +515,7 @@ class Arcade_Flicker(pygame.sprite.Sprite):
 # Main game loop
 if __name__ == '__main__':
   pygame.init()
+  pygame.mixer.init()
   os.environ['SDL_VIDEO_CENTERED'] = '1'
   info = pygame.display.Info()
   display_width = info.current_w
