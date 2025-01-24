@@ -108,6 +108,7 @@ class Game:
         print("Game started!")
         self.menu_running = False
         self.game_running = True
+        self.score = 0
         self.timers['spawn_boss'].activate()
         self.timers['spawn_enemies'].activate()
 
@@ -357,6 +358,7 @@ class Game:
         game_over_score_rect = game_over_score_text.get_rect(center=(display_width / 2, display_height / 2))
         
         screen.blit(game_over_score_text, game_over_score_rect)
+        self.reset_elements()
         
 
     def handle_high_scores(self):
@@ -370,10 +372,8 @@ class Game:
 
         os.system("code\\high_score")
         os.system("code\\move_to_hs")
-    
-    def reset_game(self):
-        # Reset all variables to their initial states 
-        self.game_running = True
+
+    def reset_elements(self):
         player_sprite = Player((display_width/2, display_height - 50), display_width/2 + screen_width/2, 8)
         self.player = pygame.sprite.GroupSingle(player_sprite)
         self.enemies.empty()
@@ -381,14 +381,18 @@ class Game:
         self.drops.empty()
         self.boss.empty()
         self.reset_timers()
-        self.score = 0
-        self.game_over = False
         self.selection = 0  # Reset selection to "Restart"
         self.runtime = 0
         self.current_time = 0
         self.spawn_enemy_time = 0
         self.spawn_enemy_start = False
+        
 
+    def reset_game(self):
+        # Reset all variables to their initial states 
+        self.score = 0
+        self.game_over = False
+        self.game_running = True
         # Restart the background music and SFX when the game restarts
         
         self.laser_audio.set_volume(0.1)  # Ensure laser audio is enabled again
@@ -398,8 +402,6 @@ class Game:
         #self.game_running = not self.game_running
         self.is_paused = not self.is_paused
 
-    def add_to_layers(self):
-        pass
     def run(self):
         if self.game_over:
             self.game_over_menu.run()

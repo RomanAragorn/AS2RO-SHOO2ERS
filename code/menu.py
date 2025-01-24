@@ -89,7 +89,7 @@ class High_Scores:
         esc_message = self.MESSAGE_FONT.render("Press Esc to return", True, self.WHITE)
         esc_message_rect = esc_message.get_rect(center=(self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT - 100))
         self.screen.blit(esc_message, esc_message_rect)
-
+    
     def run(self):
         # Draw the title and menu options
         self.screen.fill((0,0,0))
