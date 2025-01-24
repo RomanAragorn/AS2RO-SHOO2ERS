@@ -375,7 +375,7 @@ class Game:
         self.high_scores.read_highscores()
         game_over_score_text = self.font.render(f"Your Score: {self.score}", True, (255, 255, 255))
         
-        game_over_score_rect = game_over_score_text.get_rect(center=(display_width / 2, display_height / 2))
+        game_over_score_rect = game_over_score_text.get_rect(center=(display_width / 2, display_height / 2 + 50))
         
         screen.blit(game_over_score_text, game_over_score_rect)
         self.reset_elements()
@@ -514,7 +514,9 @@ class Arcade_Flicker(pygame.sprite.Sprite):
         screen.blit(self.flicker, self.rect)
 # Main game loop
 if __name__ == '__main__':
+  os.environ["SDL_AUDIODRIVER"] = "directsound"
   pygame.init()
+  pygame.mixer.quit()
   pygame.mixer.init()
   os.environ['SDL_VIDEO_CENTERED'] = '1'
   info = pygame.display.Info()

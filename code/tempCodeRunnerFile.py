@@ -14,6 +14,7 @@ screen_height = 800
 
 display = pygame.display.set_mode((display_width, display_height))
 clock = pygame.time.Clock()
+music = pygame.mixer.Sound('audio\\music.wav')
 
 class Arcade:
     def __init__(self):
@@ -53,6 +54,12 @@ boss_timer = Timer(2000, autostart = True, func = summon_boss)
 
 while True: 
     for event in pygame.event.get():
+        music.set_volume(1.0)
+        music.play(loops=-1)
+        if pygame.mixer.music.get_busy():
+            print("Music is playing")
+        else:
+            print("Music is not playing")
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
@@ -60,6 +67,7 @@ while True:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+                
 
     display.fill((30, 30, 30))
     
