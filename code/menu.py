@@ -92,6 +92,7 @@ class High_Scores:
 
     def run(self):
         # Draw the title and menu options
+        self.screen.fill((0,0,0))
         self.display_title()
         self.display_scores()
         self.display_esc()
@@ -133,6 +134,7 @@ class Game_Over:
     def display_title(self):
         title_surf = self.title_font.render("GAME OVER", False, 'white')
         title_rect = title_surf.get_rect(center=(self.screen_width / 2, 500))
+        self.screen.fill((0,0,0))
         self.screen.blit(title_surf, title_rect)
     
     def display_menu(self):

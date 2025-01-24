@@ -371,6 +371,7 @@ class Game:
                             if self.shield_amount < self.shield_max_amount:
                                 self.shield_amount += 1
                         drop.kill()
+    
     def display_score(self):
         score_surf = self.font.render(f'{self.score}', False, 'white')
         score_rect = score_surf.get_rect(topleft=(arcade_screen_left + 10, arcade_screen_top))
@@ -397,8 +398,9 @@ class Game:
         game_over_score_text = self.font.render(f"Your Score: {self.score}", True, (255, 255, 255))
         
         game_over_score_rect = game_over_score_text.get_rect(center=(display_width / 2, display_height / 2))
-      
+        
         screen.blit(game_over_score_text, game_over_score_rect)
+        
 
     def handle_high_scores(self):
         with open('records\\high_scores.txt', 'r') as file:
@@ -536,8 +538,10 @@ class Arcade_Flicker(pygame.sprite.Sprite):
 # Main game loop
 if __name__ == '__main__':
   pygame.init()
-  display_width = 1920
-  display_height = 1080
+  os.environ['SDL_VIDEO_CENTERED'] = '1'
+  info = pygame.display.Info()
+  display_width = info.current_w
+  display_height = info.current_h
   screen_width = 400
   screen_height = 800
   arcade_screen_left = 660
